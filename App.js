@@ -240,6 +240,8 @@ const App = () => {
         case 4:
           wallet = wallets.find(w => w.weOwnTransaction(payload.txid || payload.hash));
           break;
+        case 5:
+          wallet = wallets.find(w => payload.userid == w.getLogin())
       }
 
       if (wallet) {
