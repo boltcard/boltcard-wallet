@@ -1,8 +1,6 @@
 # Bolt Card Wallet - [boltcard.org](https://boltcard.org)
 
-Android only at the moment, currently working on iOS version release TBC 
-
-** IMPORTANT: Requires a Bolt Card Hub service to connect to **
+** IMPORTANT: Requires a Bolt Card Hub service to connect to **  
 [Instructions for running your own bolt card service](https://github.com/boltcard/boltcard-lndhub-docker#readme)
 
 ## A fork of [Bluewallet](https://bluewallet.io/)
@@ -16,6 +14,10 @@ For more information on the bolt card standard see [boltcard.org](https://boltca
 ## Google Play Store Install
 
 [Google Play Store](https://play.google.com/store/apps/details?id=com.boltcard.boltcard)
+
+## Apple App Store Install
+
+[Apple App Store](https://apps.apple.com/us/app/bolt-card-wallet/id6446301845)
 
 ## Precompiled Binaries (APK / AAB)
 
