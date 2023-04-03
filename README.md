@@ -15,9 +15,7 @@ For more information on the bolt card standard see [boltcard.org](https://boltca
 
 ## Google Play Store Install
 
-Not available right now, currently app is in review...
 [Google Play Store](https://play.google.com/store/apps/details?id=com.boltcard.boltcard)
-Will be at this address when ready.
 
 ## Precompiled Binaries (APK / AAB)
 
