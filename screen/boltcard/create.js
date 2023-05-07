@@ -1,32 +1,30 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
 import {
     BackHandler,
-    NativeEventEmitter, 
-    NativeModules,  
-    StyleSheet, 
-    Text, 
-    View,
-    StatusBar,
-    ScrollView,
     Image,
+    NativeEventEmitter,
+    NativeModules,
     Platform,
-    TouchableOpacity
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    View
 } from 'react-native';
-import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
-import {Icon, ListItem, Tooltip} from 'react-native-elements';
+import { Icon, ListItem, Tooltip } from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import QRCodeComponent from '../../components/QRCodeComponent';
 
 import {
-    BlueLoading,
+    BlueButton,
     BlueCard,
-    BlueText,
-    BlueButton
+    BlueLoading,
+    BlueText
 } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
-import loc, { formatBalance } from '../../loc';
 import alert from '../../components/Alert';
+import navigationStyle from '../../components/navigationStyle';
 
 const BoltCardCreate = () => {
 
@@ -406,7 +404,7 @@ const BoltCardCreate = () => {
                                             })()} style={{width: 40, height: 30, marginTop:20}}
                                         />
                                         </BlueText>
-                                        <BlueText style={styles.label}>Tap and hold your nfc card to the reader.</BlueText>
+                                        <BlueText style={styles.label}>Hold your nfc card to the reader.</BlueText>
                                         <BlueText style={styles.label}><BlueLoading /></BlueText>
                                         <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
                                         <BlueText style={{borderWidth:1, borderColor:'#fff', paddingHorizontal:5}} onPress={()=>togglePrivacy()}>
