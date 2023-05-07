@@ -1,16 +1,16 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { Image, Text, TouchableOpacity, View, InteractionManager, I18nManager, StyleSheet, Linking } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { I18nManager, Image, InteractionManager, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet } from '../class';
-import { BitcoinUnit } from '../models/bitcoinUnits';
-import WalletGradient from '../class/wallet-gradient';
-import Biometric from '../class/biometrics';
-import loc, { formatBalance } from '../loc';
-import { BlueStorageContext } from '../blue_modules/storage-context';
-import ToolTipMenu from './TooltipMenu';
 import { BluePrivateBalance } from '../BlueComponents';
+import { BlueStorageContext } from '../blue_modules/storage-context';
+import { LightningCustodianWallet, MultisigHDWallet } from '../class';
+import Biometric from '../class/biometrics';
+import WalletGradient from '../class/wallet-gradient';
+import loc, { formatBalance } from '../loc';
+import { BitcoinUnit } from '../models/bitcoinUnits';
+import ToolTipMenu from './TooltipMenu';
 
 export default class TransactionsNavigationHeader extends Component {
   static propTypes = {
@@ -137,13 +137,13 @@ export default class TransactionsNavigationHeader extends Component {
     this.props.onManageFundsPressed(id);
   };
 
-  onBuyBoltcardsPressed = id => {
-    if (id === TransactionsNavigationHeader.actionKeys.Refill) {
-      Linking.openURL('https://lasereyes.cards?link=boltcardwallet');
-    } else if (id === TransactionsNavigationHeader.actionKeys.RefillWithExternalWallet) {
-      Linking.openURL('https://boltcardwallet.com/buy-bolt-cards');
-    }
-  }
+  // onBuyBoltcardsPressed = id => {
+  //   if (id === TransactionsNavigationHeader.actionKeys.Refill) {
+  //     Linking.openURL('https://lasereyes.cards?link=boltcardwallet');
+  //   } else if (id === TransactionsNavigationHeader.actionKeys.RefillWithExternalWallet) {
+  //     Linking.openURL('https://boltcardwallet.com/buy-bolt-cards');
+  //   }
+  // }
 
   createBoltCardPressed = () => {
     this.props.onCreateBoltCardPressed();
@@ -184,7 +184,6 @@ export default class TransactionsNavigationHeader extends Component {
         <Image
           source={(() => {
             switch (this.state.wallet.type) {
-              case LightningLdkWallet.type:
               case LightningCustodianWallet.type:
                 return I18nManager.isRTL ? require('../img/bolt-shape.png') : require('../img/bolt-shape.png');
               case MultisigHDWallet.type:
@@ -290,17 +289,6 @@ export default class TransactionsNavigationHeader extends Component {
               </View>
             }
           </>
-        )}
-        {this.state.wallet.type === LightningCustodianWallet.type && this.state.allowOnchainAddress && (
-          <ToolTipMenu
-            isMenuPrimaryAction
-            isButton
-            onPressMenuItem={this.onBuyBoltcardsPressed}
-            actions={this.toolTipMenuActions}
-            buttonStyle={styles.manageFundsButton}
-          >
-            <Text style={styles.manageFundsButtonText}>Buy Bolt Cards</Text>
-          </ToolTipMenu>
         )}
         </View>
 
