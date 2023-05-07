@@ -168,15 +168,12 @@ android {
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
-    implementation("com.facebook.react:react-android")
-    implementation files("../../node_modules/rn-ldk/android/libs/LDK-release.aar")
-   
+    implementation("com.facebook.react:react-android")   
 
     // BOLTCARD
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation fileTree(dir: "libs", include: ["*.aar"])
     //noinspection GradleDynamicVersion
-    implementation files("../../node_modules/react-native-tor/android/libs/sifir_android.aar")
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
@@ -195,7 +192,6 @@ dependencies {
     // END OF BOLTCARD
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
-    implementation files("../../node_modules/react-native-tor/android/libs/sifir_android.aar")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

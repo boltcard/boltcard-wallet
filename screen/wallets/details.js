@@ -1,50 +1,49 @@
-import React, { useEffect, useState, useCallback, useContext, useRef, useMemo, useLayoutEffect } from 'react';
+import { useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  I18nManager,
+  InteractionManager,
+  Keyboard,
+  KeyboardAvoidingView,
+  Linking,
+  PermissionsAndroid,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Switch,
   Text,
   TextInput,
-  Alert,
-  KeyboardAvoidingView,
   TouchableOpacity,
-  Keyboard,
   TouchableWithoutFeedback,
-  Switch,
-  Platform,
-  Linking,
-  StyleSheet,
-  StatusBar,
-  ScrollView,
-  PermissionsAndroid,
-  InteractionManager,
-  ActivityIndicator,
-  I18nManager,
+  View,
 } from 'react-native';
-import { BlueCard, BlueLoading, BlueSpacing10, BlueSpacing20, BlueText, SecondButton, BlueListItem } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
-import { LightningCustodianWallet } from '../../class/wallets/lightning-custodian-wallet';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import Biometric from '../../class/biometrics';
-import {
-  HDSegwitBech32Wallet,
-  SegwitP2SHWallet,
-  LegacyWallet,
-  SegwitBech32Wallet,
-  WatchOnlyWallet,
-  MultisigHDWallet,
-  HDAezeedWallet,
-  LightningLdkWallet,
-} from '../../class';
-import loc, { formatBalanceWithoutSuffix } from '../../loc';
-import { useTheme, useRoute, useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Share from 'react-native-share';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
-import Notifications from '../../blue_modules/notifications';
+import { BlueCard, BlueListItem, BlueLoading, BlueSpacing10, BlueSpacing20, BlueText, SecondButton } from '../../BlueComponents';
 import { isDesktop } from '../../blue_modules/environment';
-import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
-import alert from '../../components/Alert';
-import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 import { writeFileAndExport } from '../../blue_modules/fs';
+import Notifications from '../../blue_modules/notifications';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
+import {
+  HDAezeedWallet,
+  HDSegwitBech32Wallet,
+  LegacyWallet,
+  MultisigHDWallet,
+  SegwitBech32Wallet,
+  SegwitP2SHWallet,
+  WatchOnlyWallet,
+} from '../../class';
+import Biometric from '../../class/biometrics';
+import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
+import { LightningCustodianWallet } from '../../class/wallets/lightning-custodian-wallet';
+import alert from '../../components/Alert';
+import navigationStyle from '../../components/navigationStyle';
+import loc, { formatBalanceWithoutSuffix } from '../../loc';
+import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 
 const prompt = require('../../helpers/prompt');
 
@@ -173,11 +172,7 @@ const WalletDetails = () => {
       color: colors.buttonTextColor,
     },
   });
-  useEffect(() => {
-    if (wallet.type === LightningLdkWallet.type) {
-      wallet.getInfo().then(setLightningWalletInfo);
-    }
-  }, [wallet]);
+  
 
   const setLabel = () => {
     setIsLoading(true);
@@ -506,18 +501,6 @@ const WalletDetails = () => {
               <Text style={[styles.textLabel1, stylesHook.textLabel1]}>{loc.wallets.details_type.toLowerCase()}</Text>
               <Text style={[styles.textValue, stylesHook.textValue]}>{wallet.typeReadable}</Text>
 
-              {wallet.type === LightningLdkWallet.type && (
-                <>
-                  <Text style={[styles.textLabel2, stylesHook.textLabel2]}>{loc.wallets.identity_pubkey}</Text>
-                  {lightningWalletInfo?.identityPubkey ? (
-                    <>
-                      <BlueText>{lightningWalletInfo.identityPubkey}</BlueText>
-                    </>
-                  ) : (
-                    <ActivityIndicator />
-                  )}
-                </>
-              )}
               {wallet.type === MultisigHDWallet.type && (
                 <>
                   <Text style={[styles.textLabel2, stylesHook.textLabel2]}>{loc.wallets.details_multisig_type}</Text>
@@ -645,12 +628,7 @@ const WalletDetails = () => {
                     <SecondButton onPress={navigateToSignVerify} testID="SignVerify" title={loc.addresses.sign_title} />
                   </>
                 )}
-                {wallet.type === LightningLdkWallet.type && (
-                  <>
-                    <BlueSpacing20 />
-                    <SecondButton onPress={navigateToLdkViewLogs} testID="LdkLogs" title={loc.lnd.view_logs} />
-                  </>
-                )}
+                
                 <BlueSpacing20 />
                 <BlueSpacing20 />
                 <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">

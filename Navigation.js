@@ -21,7 +21,6 @@ import NotificationSettings from './screen/settings/notificationSettings';
 import ReleaseNotes from './screen/settings/releasenotes';
 import Settings from './screen/settings/settings';
 import Tools from './screen/settings/tools';
-import TorSettings from './screen/settings/torSettings';
 
 import AddWallet from './screen/wallets/add';
 import WalletsAddMultisig from './screen/wallets/addMultisig';
@@ -37,7 +36,6 @@ import ImportWalletDiscovery from './screen/wallets/importDiscovery';
 import ImportSpeed from './screen/wallets/importSpeed';
 import WalletsList from './screen/wallets/list';
 import PleaseBackup from './screen/wallets/pleaseBackup';
-import PleaseBackupLdk from './screen/wallets/pleaseBackupLdk';
 import PleaseBackupLNDHub from './screen/wallets/pleaseBackupLNDHub';
 import ProvideEntropy from './screen/wallets/provideEntropy';
 import ReorderWallets from './screen/wallets/reorderWallets';
@@ -70,8 +68,6 @@ import Success from './screen/send/success';
 
 import { isDesktop, isHandset, isTablet } from './blue_modules/environment';
 import LappBrowser from './screen/lnd/browser';
-import LdkInfo from './screen/lnd/ldkInfo';
-import LdkOpenChannel from './screen/lnd/ldkOpenChannel';
 import LNDCreateInvoice from './screen/lnd/lndCreateInvoice';
 import LNDViewAdditionalInvoiceInformation from './screen/lnd/lndViewAdditionalInvoiceInformation';
 import LNDViewAdditionalInvoicePreImage from './screen/lnd/lndViewAdditionalInvoicePreImage';
@@ -82,14 +78,13 @@ import LnurlPaySuccess from './screen/lnd/lnurlPaySuccess';
 import ScanLndInvoice from './screen/lnd/scanLndInvoice';
 import SettingsPrivacy from './screen/settings/SettingsPrivacy';
 import DrawerList from './screen/wallets/drawerList';
-import LdkViewLogs from './screen/wallets/ldkViewLogs';
 import UnlockWith from './UnlockWith';
 
 import BoltCardCreate from './screen/boltcard/create';
+import BoltCardCreateHelp from './screen/boltcard/createHelp';
 import BoltCardDetails from './screen/boltcard/details';
-import BoltCardCreateHelp from './screen/boltcard/createHelp'
-import BoltCardDisconnectHelp from './screen/boltcard/disconnectHelp'
 import BoltCardDisconnect from './screen/boltcard/disconnect';
+import BoltCardDisconnectHelp from './screen/boltcard/disconnectHelp';
 
 const WalletsStack = createNativeStackNavigator();
 
@@ -100,10 +95,7 @@ const WalletsRoot = () => {
     <WalletsStack.Navigator screenOptions={{ headerHideShadow: true }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)} />
-      <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
-      <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />
-      <WalletsStack.Screen name="LdkViewLogs" component={LdkViewLogs} options={LdkViewLogs.navigationOptions(theme)} />
       <WalletsStack.Screen name="TransactionDetails" component={TransactionDetails} options={TransactionDetails.navigationOptions(theme)} />
       <WalletsStack.Screen name="TransactionStatus" component={TransactionStatus} options={TransactionStatus.navigationOptions(theme)} />
       <WalletsStack.Screen name="CPFP" component={CPFP} options={CPFP.navigationOptions(theme)} />
@@ -134,7 +126,6 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="BolthubSettings" component={BolthubSettings} options={BolthubSettings.navigationOptions(theme)} />
       <WalletsStack.Screen name="LightningSettings" component={LightningSettings} options={LightningSettings.navigationOptions(theme)} />
       <WalletsStack.Screen name="ElectrumSettings" component={ElectrumSettings} options={ElectrumSettings.navigationOptions(theme)} />
-      <WalletsStack.Screen name="TorSettings" component={TorSettings} options={TorSettings.navigationOptions(theme)} />
       <WalletsStack.Screen name="SettingsPrivacy" component={SettingsPrivacy} options={SettingsPrivacy.navigationOptions(theme)} />
       <WalletsStack.Screen name="Tools" component={Tools} options={Tools.navigationOptions(theme)} />
       <WalletsStack.Screen name="LNDViewInvoice" component={LNDViewInvoice} options={LNDViewInvoice.navigationOptions(theme)} />
@@ -191,7 +182,6 @@ const AddWalletRoot = () => {
         component={PleaseBackupLNDHub}
         options={PleaseBackupLNDHub.navigationOptions(theme)}
       />
-      <AddWalletStack.Screen name="PleaseBackupLdk" component={PleaseBackupLdk} options={PleaseBackupLdk.navigationOptions(theme)} />
       <AddWalletStack.Screen name="ProvideEntropy" component={ProvideEntropy} options={ProvideEntropy.navigationOptions(theme)} />
       <AddWalletStack.Screen
         name="WalletsAddMultisig"
@@ -287,23 +277,6 @@ const ScanLndInvoiceRoot = () => {
       <ScanLndInvoiceStack.Screen name="LnurlPay" component={LnurlPay} options={LnurlPay.navigationOptions(theme)} />
       <ScanLndInvoiceStack.Screen name="LnurlPaySuccess" component={LnurlPaySuccess} options={LnurlPaySuccess.navigationOptions(theme)} />
     </ScanLndInvoiceStack.Navigator>
-  );
-};
-
-const LDKOpenChannelStack = createNativeStackNavigator();
-const LDKOpenChannelRoot = () => {
-  const theme = useTheme();
-
-  return (
-    <LDKOpenChannelStack.Navigator name="LDKOpenChannelRoot" screenOptions={{ headerHideShadow: true }} initialRouteName="SelectWallet">
-      <LDKOpenChannelStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
-      <LDKOpenChannelStack.Screen
-        name="LDKOpenChannelSetAmount"
-        component={LdkOpenChannel}
-        options={LdkOpenChannel.navigationOptions(theme)}
-      />
-      <LDKOpenChannelStack.Screen name="Success" component={Success} options={{ headerShown: false, gestureEnabled: false }} />
-    </LDKOpenChannelStack.Navigator>
   );
 };
 
@@ -513,7 +486,6 @@ const Navigation = () => {
       <RootStack.Screen name="SelectWallet" component={SelectWallet} />
       <RootStack.Screen name="ReceiveDetailsRoot" component={ReceiveDetailsStackRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="LappBrowserRoot" component={LappBrowserStackRoot} options={NavigationDefaultOptions} />
-      <RootStack.Screen name="LDKOpenChannelRoot" component={LDKOpenChannelRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="BoltCardCreateRoot" component={BoltCardCreateRoot} options={NavigationDefaultOptions} />
 
       <RootStack.Screen

@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback, useContext, useRef } from 'react';
+import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
+  I18nManager,
   InteractionManager,
   PixelRatio,
   Platform,
@@ -11,29 +13,26 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  findNodeHandle,
   TouchableOpacity,
   View,
-  I18nManager,
+  findNodeHandle,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useRoute, useNavigation, useTheme, useFocusEffect } from '@react-navigation/native';
-import { Chain } from '../../models/bitcoinUnits';
 import { BlueAlertWalletExportReminder } from '../../BlueComponents';
-import WalletGradient from '../../class/wallet-gradient';
-import navigationStyle from '../../components/navigationStyle';
-import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
-import ActionSheet from '../ActionSheet';
-import loc from '../../loc';
-import { FContainer, FButton } from '../../components/FloatButtons';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
-import { isDesktop } from '../../blue_modules/environment';
 import BlueClipboard from '../../blue_modules/clipboard';
-import LNNodeBar from '../../components/LNNodeBar';
-import TransactionsNavigationHeader from '../../components/TransactionsNavigationHeader';
-import { TransactionListItem } from '../../components/TransactionListItem';
-import alert from '../../components/Alert';
+import { isDesktop } from '../../blue_modules/environment';
 import Notifications from '../../blue_modules/notifications';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
+import { LightningCustodianWallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
+import WalletGradient from '../../class/wallet-gradient';
+import alert from '../../components/Alert';
+import { FButton, FContainer } from '../../components/FloatButtons';
+import { TransactionListItem } from '../../components/TransactionListItem';
+import TransactionsNavigationHeader from '../../components/TransactionsNavigationHeader';
+import navigationStyle from '../../components/navigationStyle';
+import loc from '../../loc';
+import { Chain } from '../../models/bitcoinUnits';
+import ActionSheet from '../ActionSheet';
 
 const fs = require('../../blue_modules/fs');
 const BlueElectrum = require('../../blue_modules/BlueElectrum');
@@ -134,7 +133,6 @@ const WalletTransactions = () => {
     if (wallet.getLastTxFetch() === 0) {
       refreshTransactions();
     }
-    refreshLnNodeInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -154,12 +152,6 @@ const WalletTransactions = () => {
     return false;
   };
 
-  const refreshLnNodeInfo = () => {
-    if (wallet.type === LightningLdkWallet.type) {
-      setLnNodeInfo({ canReceive: wallet.getReceivableBalance(), canSend: wallet.getBalance() });
-    }
-  };
-
   /**
    * Forcefully fetches TXs and balance for wallet
    */
@@ -170,7 +162,6 @@ const WalletTransactions = () => {
     let noErr = true;
     let smthChanged = false;
     try {
-      refreshLnNodeInfo();
       // await BlueElectrum.ping();
       await BlueElectrum.waitTillConnected();
       /** @type {LegacyWallet} */
@@ -233,11 +224,6 @@ const WalletTransactions = () => {
 
     return (
       <View style={styles.flex}>
-        {wallet.type === LightningLdkWallet.type && (lnNodeInfo.canSend > 0 || lnNodeInfo.canReceive > 0) && (
-          <View style={[styles.marginHorizontal18, styles.marginBottom18]}>
-            <LNNodeBar canSend={lnNodeInfo.canSend} canReceive={lnNodeInfo.canReceive} itemPriceUnit={itemPriceUnit} />
-          </View>
-        )}
         <View style={styles.listHeaderTextRow}>
           <Text style={[styles.listHeaderText, stylesHook.listHeaderText]}>{loc.transactions.list_title}</Text>
           <TouchableOpacity
@@ -456,8 +442,6 @@ const WalletTransactions = () => {
         onManageFundsPressed={id => {
           if (wallet.type === MultisigHDWallet.type) {
             navigateToViewEditCosigners();
-          } else if (wallet.type === LightningLdkWallet.type) {
-            navigate('LdkInfo', { walletID: wallet.getID() });
           } else if (wallet.type === LightningCustodianWallet.type) {
             if (wallet.getUserHasSavedExport()) {
               onManageFundsPressed({ id });

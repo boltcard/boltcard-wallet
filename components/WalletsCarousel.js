@@ -1,27 +1,27 @@
-import React, { useRef, useCallback, useImperativeHandle, forwardRef, useContext } from 'react';
+import { useTheme } from '@react-navigation/native';
 import PropTypes from 'prop-types';
+import React, { forwardRef, useCallback, useContext, useImperativeHandle, useRef } from 'react';
 import {
   Animated,
-  Image,
+  Dimensions,
+  FlatList,
   I18nManager,
+  Image,
   Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  useWindowDimensions,
   View,
-  Dimensions,
-  FlatList,
+  useWindowDimensions,
 } from 'react-native';
-import { useTheme } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import loc, { formatBalance, transactionTimeToReadable } from '../loc';
-import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet } from '../class';
-import WalletGradient from '../class/wallet-gradient';
 import { BluePrivateBalance } from '../BlueComponents';
+import { isDesktop, isHandset, isTablet } from '../blue_modules/environment';
 import { BlueStorageContext } from '../blue_modules/storage-context';
-import { isHandset, isTablet, isDesktop } from '../blue_modules/environment';
+import { LightningCustodianWallet, MultisigHDWallet } from '../class';
+import WalletGradient from '../class/wallet-gradient';
+import loc, { formatBalance, transactionTimeToReadable } from '../loc';
 
 const nStyles = StyleSheet.create({
   container: {
@@ -170,7 +170,6 @@ const WalletCarouselItem = ({ item, index, onPress, handleLongPress, isSelectedW
   const opacity = isSelectedWallet === false ? 0.5 : 1.0;
   let image;
   switch (item.type) {
-    case LightningLdkWallet.type:
     case LightningCustodianWallet.type:
       image = I18nManager.isRTL ? require('../img/bolt-shape.png') : require('../img/bolt-shape.png');
       break;

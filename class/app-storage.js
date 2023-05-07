@@ -1,27 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNSecureKeyStore, { ACCESSIBLE } from 'react-native-secure-key-store';
 import * as Keychain from 'react-native-keychain';
+import RNSecureKeyStore, { ACCESSIBLE } from 'react-native-secure-key-store';
+import alert from '../components/Alert';
 import {
-  HDLegacyBreadwalletWallet,
-  HDSegwitP2SHWallet,
-  HDLegacyP2PKHWallet,
-  WatchOnlyWallet,
-  LegacyWallet,
-  SegwitP2SHWallet,
-  SegwitBech32Wallet,
-  HDSegwitBech32Wallet,
-  LightningCustodianWallet,
-  HDLegacyElectrumSeedP2PKHWallet,
-  HDSegwitElectrumSeedP2WPKHWallet,
   HDAezeedWallet,
+  HDLegacyBreadwalletWallet,
+  HDLegacyElectrumSeedP2PKHWallet,
+  HDLegacyP2PKHWallet,
+  HDSegwitBech32Wallet,
+  HDSegwitElectrumSeedP2WPKHWallet,
+  HDSegwitP2SHWallet,
+  LegacyWallet,
+  LightningCustodianWallet,
   MultisigHDWallet,
-  LightningLdkWallet,
-  SLIP39SegwitP2SHWallet,
   SLIP39LegacyP2PKHWallet,
   SLIP39SegwitBech32Wallet,
+  SLIP39SegwitP2SHWallet,
+  SegwitBech32Wallet,
+  SegwitP2SHWallet,
+  WatchOnlyWallet,
 } from './';
 import { randomBytes } from './rng';
-import alert from '../components/Alert';
 const encryption = require('../blue_modules/encryption');
 const Realm = require('realm');
 const createHash = require('create-hash');
@@ -373,9 +372,6 @@ export class AppStorage {
             }
 
             break;
-          case LightningLdkWallet.type:
-            unserializedWallet = LightningLdkWallet.fromJson(key);
-            break;
           case SLIP39SegwitP2SHWallet.type:
             unserializedWallet = SLIP39SegwitP2SHWallet.fromJson(key);
             break;
@@ -442,12 +438,6 @@ export class AppStorage {
   deleteWallet = wallet => {
     const ID = wallet.getID();
     const tempWallets = [];
-
-    if (wallet.type === LightningLdkWallet.type) {
-      /** @type {LightningLdkWallet} */
-      const ldkwallet = wallet;
-      ldkwallet.stop().then(ldkwallet.purgeLocalStorage).catch(alert);
-    }
 
     for (const value of this.wallets) {
       if (value.getID() === ID) {

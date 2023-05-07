@@ -1,36 +1,35 @@
+import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  I18nManager,
   Image,
   Keyboard,
   KeyboardAvoidingView,
+  Platform,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
-  Platform,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  I18nManager,
 } from 'react-native';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Icon } from 'react-native-elements';
-import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-import { BlueAlertWalletExportReminder, BlueButton, BlueDismissKeyboardInputAccessory, BlueLoading } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
-import AmountInput from '../../components/AmountInput';
-import * as NavigationService from '../../NavigationService';
-import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
-import loc, { formatBalance, formatBalanceWithoutSuffix, formatBalancePlain } from '../../loc';
-import Lnurl from '../../class/lnurl';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
-import Notifications from '../../blue_modules/notifications';
-import alert from '../../components/Alert';
 import { parse } from 'url'; // eslint-disable-line n/no-deprecated-api
+import { BlueAlertWalletExportReminder, BlueButton, BlueDismissKeyboardInputAccessory, BlueLoading } from '../../BlueComponents';
+import * as NavigationService from '../../NavigationService';
+import Notifications from '../../blue_modules/notifications';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
+import Lnurl from '../../class/lnurl';
+import alert from '../../components/Alert';
+import AmountInput from '../../components/AmountInput';
+import navigationStyle from '../../components/navigationStyle';
+import loc, { formatBalance, formatBalancePlain, formatBalanceWithoutSuffix } from '../../loc';
+import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 const currency = require('../../blue_modules/currency');
-const torrific = require('../../blue_modules/torrific');
 
 const LNDCreateInvoice = () => {
   const { wallets, saveToDisk, setSelectedWallet, isTorDisabled } = useContext(BlueStorageContext);
@@ -200,19 +199,13 @@ const LNDCreateInvoice = () => {
         const callbackUrl = callback + (callback.indexOf('?') !== -1 ? '&' : '?') + 'k1=' + k1 + '&pr=' + invoiceRequest;
 
         let reply;
-        if (!isTorDisabled && callbackUrl.includes('.onion')) {
-          const api = new torrific.Torsbee();
-          const torResponse = await api.get(callbackUrl);
-          reply = torResponse.body;
-          if (reply && typeof reply === 'string') reply = JSON.parse(reply);
-        } else {
-          const resp = await fetch(callbackUrl, { method: 'GET' });
-          if (resp.status >= 300) {
-            const text = await resp.text();
-            throw new Error(text);
-          }
-          reply = await resp.json();
+        const resp = await fetch(callbackUrl, { method: 'GET' });
+        if (resp.status >= 300) {
+          const text = await resp.text();
+          throw new Error(text);
         }
+        reply = await resp.json();
+        
 
         if (reply.status === 'ERROR') {
           throw new Error('Reply from server: ' + reply.reason);
@@ -259,20 +252,13 @@ const LNDCreateInvoice = () => {
     // calling the url
     let reply;
     try {
-      if (!isTorDisabled && url.includes('.onion')) {
-        const api = new torrific.Torsbee();
-        const torResponse = await api.get(url);
-        reply = torResponse.body;
-        if (reply && typeof reply === 'string') reply = JSON.parse(reply);
-      } else {
-        const resp = await fetch(url, { method: 'GET' });
-        if (resp.status >= 300) {
-          throw new Error('Bad response from server');
-        }
-        reply = await resp.json();
-        if (reply.status === 'ERROR') {
-          throw new Error('Reply from server: ' + reply.reason);
-        }
+      const resp = await fetch(url, { method: 'GET' });
+      if (resp.status >= 300) {
+        throw new Error('Bad response from server');
+      }
+      reply = await resp.json();
+      if (reply.status === 'ERROR') {
+        throw new Error('Reply from server: ' + reply.reason);
       }
 
       if (reply.tag === Lnurl.TAG_PAY_REQUEST) {

@@ -1,16 +1,16 @@
 /* eslint-disable react/prop-types */
+import { useNavigation, useNavigationState, useRoute, useTheme } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
-import { View, ActivityIndicator, Image, Text, TouchableOpacity, I18nManager, FlatList, StyleSheet, StatusBar } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { ActivityIndicator, FlatList, I18nManager, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useRoute, useTheme, useNavigation, useNavigationState } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
-import { SafeBlueArea, BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
-import WalletGradient from '../../class/wallet-gradient';
-import loc, { formatBalance, transactionTimeToReadable } from '../../loc';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
+import { BluePrivateBalance, BlueSpacing20, BlueText, SafeBlueArea } from '../../BlueComponents';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
+import { LightningCustodianWallet, MultisigHDWallet } from '../../class';
+import WalletGradient from '../../class/wallet-gradient';
+import navigationStyle from '../../components/navigationStyle';
+import loc, { formatBalance, transactionTimeToReadable } from '../../loc';
 
 const SelectWallet = () => {
   const { chainType, onWalletSelect, availableWallets, noWalletExplanationText } = useRoute().params;
@@ -137,7 +137,6 @@ const SelectWallet = () => {
             <Image
               source={(() => {
                 switch (item.type) {
-                  case LightningLdkWallet.type:
                   case LightningCustodianWallet.type:
                     return I18nManager.isRTL ? require('../../img/bolt-shape.png') : require('../../img/bolt-shape.png');
                   case MultisigHDWallet.type:

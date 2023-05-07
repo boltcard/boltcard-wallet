@@ -1,12 +1,10 @@
 import { bech32 } from 'bech32';
 import bolt11 from 'bolt11';
-import { isTorDaemonDisabled } from '../blue_modules/environment';
-import { parse } from 'url'; // eslint-disable-line n/no-deprecated-api
 import { createHmac } from 'crypto';
 import secp256k1 from 'secp256k1';
+import { parse } from 'url'; // eslint-disable-line n/no-deprecated-api
 const CryptoJS = require('crypto-js');
 const createHash = require('create-hash');
-const torrific = require('../blue_modules/torrific');
 const ONION_REGEX = /^(http:\/\/[^/:@]+\.onion(?::\d{1,5})?)(\/.*)?$/; // regex for onion URL
 
 /**
@@ -66,11 +64,6 @@ export default class Lnurl {
   }
 
   async fetchGet(url) {
-    const parsedOnionUrl = Lnurl.parseOnionUrl(url);
-    if (parsedOnionUrl) {
-      return _fetchGetTor(parsedOnionUrl);
-    }
-
     const resp = await fetch(url, { method: 'GET' });
     if (resp.status >= 300) {
       throw new Error('Bad response from server');
@@ -340,27 +333,3 @@ export default class Lnurl {
   }
 }
 
-async function _fetchGetTor(parsedOnionUrl) {
-  const torDaemonDisabled = await isTorDaemonDisabled();
-  if (torDaemonDisabled) {
-    throw new Error('Tor onion url support disabled');
-  }
-  const [baseURI, path] = parsedOnionUrl;
-  const tor = new torrific.Torsbee({
-    baseURI,
-  });
-  const response = await tor.get(path || '/', {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': 'application/json',
-    },
-  });
-  const json = response.body;
-  if (typeof json === 'undefined' || response.err) {
-    throw new Error('Bad response from server: ' + response.err + ' ' + JSON.stringify(response.body));
-  }
-  if (json.status === 'ERROR') {
-    throw new Error('Reply from server: ' + json.reason);
-  }
-  return json;
-}

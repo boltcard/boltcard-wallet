@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useContext, useState } from 'react';
-import { View, Image, Text, StyleSheet, StatusBar, I18nManager, Pressable, useColorScheme, Platform } from 'react-native';
-import { BluePrivateBalance } from '../../BlueComponents';
-import DraggableFlatList, { ScaleDecorator } from '../../components/react-native-draggable-flatlist';
-import LinearGradient from 'react-native-linear-gradient';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
-import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet } from '../../class';
-import WalletGradient from '../../class/wallet-gradient';
-import loc, { formatBalance, transactionTimeToReadable } from '../../loc';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { I18nManager, Image, Platform, Pressable, StatusBar, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import LinearGradient from 'react-native-linear-gradient';
+import { BluePrivateBalance } from '../../BlueComponents';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
+import { LightningCustodianWallet, MultisigHDWallet } from '../../class';
+import WalletGradient from '../../class/wallet-gradient';
+import navigationStyle from '../../components/navigationStyle';
+import DraggableFlatList, { ScaleDecorator } from '../../components/react-native-draggable-flatlist';
+import loc, { formatBalance, transactionTimeToReadable } from '../../loc';
 
 const styles = StyleSheet.create({
   root: {
@@ -115,7 +115,6 @@ const ReorderWallets = () => {
             <Image
               source={(() => {
                 switch (item.type) {
-                  case LightningLdkWallet.type:
                   case LightningCustodianWallet.type:
                     return I18nManager.isRTL ? require('../../img/bolt-shape.png') : require('../../img/bolt-shape.png');
                   case MultisigHDWallet.type:
