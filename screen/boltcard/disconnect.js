@@ -1,32 +1,30 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
 import {
-    NativeEventEmitter, 
-    NativeModules,  
-    StyleSheet, 
-    Text, 
-    View,
-    StatusBar,
-    ScrollView,
-    TextInput,
-    Image,
-    Platform,
     Alert,
-    TouchableOpacity
+    NativeEventEmitter,
+    NativeModules,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    View
 } from 'react-native';
-import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
-import {Icon} from 'react-native-elements';
 import Dialog from 'react-native-dialog';
+import { Icon } from 'react-native-elements';
 import QRCodeComponent from '../../components/QRCodeComponent';
 
 import {
-    BlueLoading,
+    BlueButton,
     BlueCard,
-    BlueText,
-    BlueButton
+    BlueLoading,
+    BlueText
 } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
+import navigationStyle from '../../components/navigationStyle';
 
 const defaultKey = "00000000000000000000000000000000";
 
@@ -273,6 +271,12 @@ const BoltCardDisconnect = () => {
                             <BlueLoading />
                         : 
                             <>
+                                {__DEV__ && <BlueButton
+                                    onPress={()=> {
+                                        setCardWiped();  
+                                    }}
+                                    title="Simulate disconnect" 
+                                />}
                                 {Platform.OS == 'ios' &&
                                     disconnectQRCode()
                                 }
