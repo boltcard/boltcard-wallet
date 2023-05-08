@@ -428,6 +428,18 @@ const BoltCardCreate = () => {
                                             <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
                                         </View>
                                         }
+                                        {__DEV__ && 
+                                            <BlueButton
+                                                onPress={()=> {
+                                                    setCardWritten('success')
+                                                    NativeModules.MyReactModule.setCardMode('read');
+                                                    setWriteMode(false);  
+                                                    setWriteKeys("success");
+                                                    setCardUID('simulated write');
+                                                }}
+                                                title="Simulate write success" 
+                                            />
+                                        }
                                     </>
                                 : 
                                     null
