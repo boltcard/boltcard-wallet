@@ -1,6 +1,7 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     BackHandler,
     Image,
     NativeEventEmitter,
@@ -408,8 +409,9 @@ const BoltCardCreate = () => {
                                         </View>
                                         <BlueText style={styles.label}>Hold your nfc card to the reader.</BlueText>
                                         <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
-                                        <BlueText style={styles.label}><BlueLoading /></BlueText>
+                                        <BlueText style={styles.label}><ActivityIndicator size="large" /></BlueText>
                                         {__DEV__ && 
+                                            <>
                                             <BlueButton
                                                 onPress={()=> {
                                                     setCardWritten('success')
@@ -417,9 +419,21 @@ const BoltCardCreate = () => {
                                                     setWriteMode(false);  
                                                     setWriteKeys("success");
                                                     setCardUID('simulated write');
+                                                    setTestc('ok');
                                                 }}
                                                 title="Simulate write success" 
                                             />
+                                            <BlueButton
+                                                onPress={()=> {
+                                                    NativeModules.MyReactModule.setCardMode('read');
+                                                    setWriteMode(false);  
+                                                    setWriteKeys("fail");
+                                                    setCardUID('simulated write');
+                                                    setTestc('fail');
+                                                }}
+                                                title="Simulate write failure" 
+                                            />
+                                            </>
                                         }
                                         <BlueButton 
                                             style={styles.link}
@@ -449,10 +463,26 @@ const BoltCardCreate = () => {
                                     null
                                 }
                                 {cardUID && 
+                                    <>
                                     <View style={{fontSize: 30}}>
+                                        {testc && testc == "ok" ?
+                                            <>
+                                                <Icon name="check" size={80} />
+                                                <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                                    Card Connected
+                                                </BlueText>
+                                            </>
+                                        :
+                                            <>
+                                                <Icon name="warning" size={80} />
+                                                <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                                    Card Write Failed
+                                                </BlueText>
+                                            </>
+                                        }
                                         <BlueButton 
                                             style={styles.link}
-                                            title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
+                                            title={!showDetails ? "Show Write Details ▼" : "Hide Write Details ▴"}
                                             onPress={() => setShowDetails(!showDetails)}
                                         />
                                         {showDetails && 
@@ -474,23 +504,22 @@ const BoltCardCreate = () => {
                                                 {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
                                                 {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
 
-                                                {writekeys == "success" ? 
-                                                    <BlueButton 
-                                                        style={styles.link}
-                                                        title="Go back"
-                                                        onPress={goBack}
-                                                    />
-                                                :
-                                                    <BlueButton 
-                                                        style={styles.link}
-                                                        title="Retry"
-                                                        onPress={writeAgain}
-                                                    />
-                                                }
+                                                
                                             </>
                                         }
                                     </View>
-
+                                    {writekeys == "success" ? 
+                                        <BlueButton 
+                                            title="Go back"
+                                            onPress={goBack}
+                                        />
+                                    :
+                                        <BlueButton 
+                                            title="Retry"
+                                            onPress={writeAgain}
+                                        />
+                                    }
+                                    </>
                                 }
                             
                             </>

@@ -1,6 +1,7 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     NativeEventEmitter,
     NativeModules,
@@ -10,7 +11,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    View
+    View,
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import { Icon } from 'react-native-elements';
@@ -228,15 +229,23 @@ const BoltCardDisconnect = () => {
                 <View style={styles.scrollBody}>
                     <Dialog.Container visible={resetNow}>
                         <Dialog.Title style={styles.textBlack}>
-                        <Icon name="creditcard" size={30} color="#000" type="antdesign" /> Tap NFC Card 
+                        <Icon name="creditcard" size={30} color="#000" type="antdesign" /> Hold NFC Card 
                         </Dialog.Title>
                         {!writeKeysOutput && <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
-                        Hold NFC card to reader when ready 
+                        Hold the bolt card to the reader until the reset has completed
                         </Text>}
                         
                         <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
-                        {writeKeysOutput ? writeKeysOutput : <BlueLoading />}
+                        {writeKeysOutput ? writeKeysOutput : <ActivityIndicator size="large" />}
                         </Text>
+                        {__DEV__ && <BlueButton
+                                    onPress={()=> {
+                                        setCardWiped(); 
+                                        setWriteKeysOutput("Card has been wiped");
+
+                                    }}
+                                    title="Simulate disconnect" 
+                                />}
                         <Dialog.Button label="Close"
                         onPress={() => {
                             console.log('wallet', wallet.cardWritten);
@@ -271,12 +280,6 @@ const BoltCardDisconnect = () => {
                             <BlueLoading />
                         : 
                             <>
-                                {__DEV__ && <BlueButton
-                                    onPress={()=> {
-                                        setCardWiped();  
-                                    }}
-                                    title="Simulate disconnect" 
-                                />}
                                 {Platform.OS == 'ios' &&
                                     disconnectQRCode()
                                 }
@@ -356,7 +359,6 @@ const BoltCardDisconnect = () => {
                                 }
                                 { Platform.OS == 'android' &&
                                     <BlueButton 
-                                        style={styles.button}
                                         title="Reset Again"
                                         color="#000000"
                                         onPress={enableResetMode}
