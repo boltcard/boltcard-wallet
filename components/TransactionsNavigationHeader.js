@@ -261,7 +261,7 @@ export default class TransactionsNavigationHeader extends Component {
                 <Image 
                     source={(() => {
                       return require('../img/bolt-card-link.png');
-                    })()} style={{width: 40, height: 30, marginTop:20}}
+                    })()} style={{width: 40, height: 30, marginLeft:10}}
                   /><Text style={styles.manageFundsButtonText}>
                   Connect Bolt Card</Text>
                 </View>
@@ -281,7 +281,7 @@ export default class TransactionsNavigationHeader extends Component {
                   <Image 
                     source={(() => {
                       return require('../img/bolt-card-linked.png');
-                    })()} style={{width: 40, height: 30, marginTop:20}}
+                    })()} style={{width: 40, height: 30, marginLeft:10}}
                   />
                     <Text style={styles.manageFundsButtonText}>Bolt Card Details</Text>
                   </View>
@@ -332,6 +332,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row'
   },
   manageFundsButtonText: {
     fontWeight: '500',
