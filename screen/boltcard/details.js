@@ -89,13 +89,13 @@ const BoltCardDetails = () => {
                 goBack();
             });
 
-        w.getcardkeys().then(response => {
-          setCardKeys(response);
-        }).catch(err => {
-            console.log('ERROR', err.message);
-            alert(err.message);
-            goBack();
-        });
+        // w.getcardkeys().then(response => {
+        //   setCardKeys(response);
+        // }).catch(err => {
+        //     console.log('ERROR', err.message);
+        //     alert(err.message);
+        //     goBack();
+        // });
     }
     useEffect(() => {
         if(wallet) {
@@ -143,17 +143,17 @@ const BoltCardDetails = () => {
       var path2 = RNFS.DownloadDirectoryPath + '/'+filename2;
       console.log('path', path);
       // write the create card key file
-      RNFS.writeFile(path, JSON.stringify(cardKeys), 'utf8')
+      RNFS.writeFile(path, JSON.stringify(wallet.cardKeys), 'utf8')
         .then((success) => {
             // write the wipe card key file
             RNFS.writeFile(path2, JSON.stringify({
               version: 1,
               action: "wipe",
-              k0: cardKeys.k0,
-              k1: cardKeys.k1,
-              k2: cardKeys.k2,
-              k3: cardKeys.k3,
-              k4: cardKeys.k4
+              k0: wallet.cardKeys.k0,
+              k1: wallet.cardKeys.k1,
+              k2: wallet.cardKeys.k2,
+              k3: wallet.cardKeys.k3,
+              k4: wallet.cardKeys.k4
             }), 'utf8')
             .then((success) => {
               alert('Card keys saved to downloads folder with filenames: \r\n\r\n'+filename+'\r\n'+filename2);
@@ -179,10 +179,10 @@ const BoltCardDetails = () => {
                     :
                         <>
                             {details && details.uid &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
-                                    <BlueText>{details.uid}</BlueText>
-                                </>
+                              <>
+                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
+                                  <BlueText>{details.uid}</BlueText>
+                              </>
                             }
                             {details && details.tx_limit_sats &&
                                 <>
@@ -269,16 +269,11 @@ const BoltCardDetails = () => {
                                 </>
                             }
                             
-                            {!editMode && cardKeys &&
+                            {!editMode && wallet && wallet.cardKeys &&
                               <>
                                 <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Keys</Text>
-                                {/* <BlueText>{cardKeys.k0}</BlueText>
-                                <BlueText>{cardKeys.k1}</BlueText>
-                                <BlueText>{cardKeys.k2}</BlueText>
-                                <BlueText>{cardKeys.k3}</BlueText>
-                                <BlueText>{cardKeys.k4}</BlueText> */}
-                                <BlueButton icon={{name:'warning'}} onPress={backupCardKeys} title="Backup Card Keys" />
-                                <BlueText>Download a key backup of your card to your phone</BlueText>
+                                <BlueButton icon={{name:'warning', color:"#fff"}} color="#fff" onPress={backupCardKeys} title="Backup Card Keys" />
+                                <BlueText style={{textAlign:'center'}}>Download a key backup of your card to your phone</BlueText>
                               </>
                             }
                             {!editMode &&
