@@ -138,12 +138,30 @@ const BoltCardDetails = () => {
     
     const backupCardKeys = () => {
       let filename = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}.json.txt`
+      let filename2 = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}-wipe.json.txt`
       var path = RNFS.DownloadDirectoryPath + '/'+filename;
+      var path2 = RNFS.DownloadDirectoryPath + '/'+filename2;
       console.log('path', path);
-      // write the file
+      // write the create card key file
       RNFS.writeFile(path, JSON.stringify(cardKeys), 'utf8')
         .then((success) => {
-          alert('Card keys saved to your downloads folder with filename: \r\n\r\n'+filename);
+            // write the wipe card key file
+            RNFS.writeFile(path2, JSON.stringify({
+              version: 1,
+              action: "wipe",
+              k0: cardKeys.k0,
+              k1: cardKeys.k1,
+              k2: cardKeys.k2,
+              k3: cardKeys.k3,
+              k4: cardKeys.k4
+            }), 'utf8')
+            .then((success) => {
+              alert('Card keys saved to downloads folder with filenames: \r\n\r\n'+filename+'\r\n'+filename2);
+            })
+            .catch((err) => {
+              console.log(err.message);
+              alert('Error downloading keys: '+err.message);
+            });
         })
         .catch((err) => {
           console.log(err.message);

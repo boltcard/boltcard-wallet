@@ -299,68 +299,24 @@ const BoltCardDisconnect = () => {
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 0</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key0} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey0(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key0}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 1</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key1} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey1(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key1}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 2</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key2} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey2(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key2}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 3</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key3} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey3(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key3}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 4</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key4} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey4(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key4}</BlueText>
+
                                 </>
                                 }
                                 { Platform.OS == 'android' &&
