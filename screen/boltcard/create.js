@@ -1,6 +1,7 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     BackHandler,
     Image,
     NativeEventEmitter,
@@ -396,37 +397,66 @@ const BoltCardCreate = () => {
                                 }
                                 {writeMode ? 
                                     <>
-                                        <BlueText style={styles.label}>Ready to write</BlueText>
-                                        <BlueText style={styles.label}>
+                                        <View style={{...styles.label,  textAlign:'center',
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-around',
+                                        alignItems: 'center'}}>
                                         <Image 
                                             source={(() => {
                                             return require('../../img/bolt-card-link.png');
                                             })()} style={{width: 40, height: 30, marginTop:20}}
                                         />
-                                        </BlueText>
+                                        </View>
                                         <BlueText style={styles.label}>Hold your nfc card to the reader.</BlueText>
-                                        <BlueText style={styles.label}><BlueLoading /></BlueText>
                                         <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
-                                        <BlueText style={{borderWidth:1, borderColor:'#fff', paddingHorizontal:5}} onPress={()=>togglePrivacy()}>
-                                            <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
-                                            Enable Private UID (Hides card UID. One-way operation, can't undo)
-                                        </BlueText>
+                                        <BlueText style={styles.label}><ActivityIndicator size="large" /></BlueText>
+                                        {__DEV__ && 
+                                            <>
+                                            <BlueButton
+                                                onPress={()=> {
+                                                    setCardWritten('success')
+                                                    NativeModules.MyReactModule.setCardMode('read');
+                                                    setWriteMode(false);  
+                                                    setWriteKeys("success");
+                                                    setCardUID('simulated write');
+                                                    setTestc('ok');
+                                                }}
+                                                title="Simulate write success" 
+                                            />
+                                            <BlueButton
+                                                onPress={()=> {
+                                                    NativeModules.MyReactModule.setCardMode('read');
+                                                    setWriteMode(false);  
+                                                    setWriteKeys("fail");
+                                                    setCardUID('simulated write');
+                                                    setTestc('fail');
+                                                }}
+                                                title="Simulate write failure" 
+                                            />
+                                            </>
+                                        }
                                         <BlueButton 
                                             style={styles.link}
-                                            title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
+                                            title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
                                             onPress={() => setShowDetails(!showDetails)}
                                         />
-                                        {showDetails && 
-                                        <View>
-                                            <BlueText style={styles.monospace}>lnurl:</BlueText>
-                                            <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
-                                            <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
-                                        </View>
+                                        {showDetails && <>
+                                            <BlueText style={{borderWidth:1, borderColor:'#999', padding:10}} onPress={()=>togglePrivacy()}>
+                                                <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
+                                                Enable Private UID (Hides card UID. One-way operation, can't undo)
+                                            </BlueText>
+                                            
+                                            <View>
+                                                <BlueText style={styles.monospace}>lnurl:</BlueText>
+                                                <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
+                                                <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
+                                            </View>
+                                        </>
                                         }
                                         {__DEV__ && 
                                             <BlueButton
@@ -445,39 +475,63 @@ const BoltCardCreate = () => {
                                     null
                                 }
                                 {cardUID && 
+                                    <>
                                     <View style={{fontSize: 30}}>
-                                            <Text>Output:</Text>
-                                            {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
-                                            {cardUID && <Text>Card UID: {cardUID} {showTickOrError(true)}</Text>}
-                                            {tagname && <Text style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</Text>}
-                                            {key0Changed && <Text>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</Text>}                       
-                                            {ndefWritten && <Text>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</Text>}
-                                            {writekeys && <Text>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</Text>}
-                                            {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
-                                            {testp && <Text>Test PICC: {
-                                                cardUID.length == 8 ? 
-                                                <>test skipped {showTickOrError(true)}</>
-                                                : 
-                                                <>{testp}{showTickOrError(testp == "ok")}</>
-                                            }</Text>}
-                                            {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
-                                            {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
+                                        {testc && testc == "ok" ?
+                                            <>
+                                                <Icon name="check" size={80} />
+                                                <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                                    Card Connected
+                                                </BlueText>
+                                            </>
+                                        :
+                                            <>
+                                                <Icon name="warning" size={80} />
+                                                <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                                    Card Write Failed
+                                                </BlueText>
+                                            </>
+                                        }
+                                        <BlueButton 
+                                            style={styles.link}
+                                            title={!showDetails ? "Show Write Details ▼" : "Hide Write Details ▴"}
+                                            onPress={() => setShowDetails(!showDetails)}
+                                        />
+                                        {showDetails && 
+                                            <>
+                                                <Text>Output:</Text>
+                                                {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
+                                                {cardUID && <Text>Card UID: {cardUID} {showTickOrError(true)}</Text>}
+                                                {tagname && <Text style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</Text>}
+                                                {key0Changed && <Text>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</Text>}                       
+                                                {ndefWritten && <Text>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</Text>}
+                                                {writekeys && <Text>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</Text>}
+                                                {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
+                                                {testp && <Text>Test PICC: {
+                                                    cardUID.length == 8 ? 
+                                                    <>test skipped {showTickOrError(true)}</>
+                                                    : 
+                                                    <>{testp}{showTickOrError(testp == "ok")}</>
+                                                }</Text>}
+                                                {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
+                                                {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
 
-                                            {writekeys == "success" ? 
-                                                <BlueButton 
-                                                    style={styles.link}
-                                                    title="Go back"
-                                                    onPress={goBack}
-                                                />
-                                            :
-                                                <BlueButton 
-                                                    style={styles.link}
-                                                    title="Retry"
-                                                    onPress={writeAgain}
-                                                />
-                                            }
+                                                
+                                            </>
+                                        }
                                     </View>
-
+                                    {writekeys == "success" ? 
+                                        <BlueButton 
+                                            title="Go back"
+                                            onPress={goBack}
+                                        />
+                                    :
+                                        <BlueButton 
+                                            title="Retry"
+                                            onPress={writeAgain}
+                                        />
+                                    }
+                                    </>
                                 }
                             
                             </>
@@ -542,7 +596,7 @@ const styles = StyleSheet.create({
       label: {
         fontWeight: '600',
         textAlign: 'center',
-        paddingBottom: 24,
+        paddingBottom: 15,
       },
       modalButton: {
         paddingVertical: 14,
