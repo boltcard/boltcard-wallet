@@ -214,7 +214,7 @@ const BoltCardCreate = () => {
     const setCardWritten = async (status) => {
         if(wallet) {
             await wallet.setCardWritten(status);
-            wallet.setCardKeys(null);
+            // wallet.setCardKeys(null);
             saveToDisk();
         }
     }
@@ -415,6 +415,30 @@ const BoltCardCreate = () => {
                                         <Icon name="warning" color="orange" size={30} /> Do not remove your card until writing is complete. 
                                         </BlueText>
                                         <BlueText style={styles.label}><ActivityIndicator size="large" /></BlueText>
+                                        
+                                        <BlueButton 
+                                            style={styles.link}
+                                            title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
+                                            onPress={() => setShowDetails(!showDetails)}
+                                        />
+                                        {showDetails && <>
+                                            <BlueText style={{borderWidth:1, borderColor:'#999', padding:10}} onPress={()=>togglePrivacy()}>
+                                                <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
+                                                Enable Private UID (Hides card UID. One-way operation, can't undo)
+                                            </BlueText>
+                                            
+                                            <View>
+                                                <BlueText style={styles.monospace}>lnurl:</BlueText>
+                                                <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
+                                                <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
+                                                <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
+                                            </View>
+                                        </>
+                                        } 
                                         {__DEV__ && 
                                             <>
                                             <BlueButton
@@ -440,29 +464,6 @@ const BoltCardCreate = () => {
                                             />
                                             </>
                                         }
-                                        <BlueButton 
-                                            style={styles.link}
-                                            title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
-                                            onPress={() => setShowDetails(!showDetails)}
-                                        />
-                                        {showDetails && <>
-                                            <BlueText style={{borderWidth:1, borderColor:'#999', padding:10}} onPress={()=>togglePrivacy()}>
-                                                <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
-                                                Enable Private UID (Hides card UID. One-way operation, can't undo)
-                                            </BlueText>
-                                            
-                                            <View>
-                                                <BlueText style={styles.monospace}>lnurl:</BlueText>
-                                                <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
-                                                <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
-                                                <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
-                                                <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
-                                                <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
-                                                <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
-                                                <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
-                                            </View>
-                                        </>
-                                        }
                                     </>
                                 : 
                                     null
@@ -472,14 +473,15 @@ const BoltCardCreate = () => {
                                     <View style={{fontSize: 30}}>
                                         {testc && testc == "ok" ?
                                             <>
-                                                <Icon name="check" color="#00f" size={80} />
+                                                <Icon name="check" color="#0f5cc0" size={80} />
                                                 <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
                                                     Card Connected
                                                 </BlueText>
                                             </>
                                         :
                                             <>
-                                                <Icon name="warning" color="#00f" size={80} />
+
+                                                <Icon name="warning" color="#0f5cc0" size={80} />
                                                 <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
                                                     Card Write Failed
                                                 </BlueText>

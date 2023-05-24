@@ -1,30 +1,26 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
 import {
-    StyleSheet, 
-    Text, 
-    View,
-    StatusBar,
-    ScrollView,
-    I18nManager,
-    TouchableOpacity,
-    Image,
-    TextInput
+  I18nManager,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
-import {Icon, ListItem} from 'react-native-elements';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {
-    BlueLoading,
-    BlueCard,
-    BlueText,
-    BlueButton,
-    BlueFormMultiInput,
-    BlueFormTextInput
+  BlueButton,
+  BlueFormTextInput,
+  BlueText
 } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
+import navigationStyle from '../../components/navigationStyle';
+var RNFS = require('react-native-fs');
+
 
 const BoltCardDetails = () => {
 
@@ -75,6 +71,7 @@ const BoltCardDetails = () => {
     const [loading, setLoading] = useState(true);
     const [details, setDetails] = useState({});
     const [editMode, setEditMode] = useState(false);
+    const [cardKeys, setCardKeys] = useState();
 
     const [txMax, setTxMax] = useState(0);
 
@@ -91,6 +88,14 @@ const BoltCardDetails = () => {
                 alert(err.message);
                 goBack();
             });
+
+        // w.getcardkeys().then(response => {
+        //   setCardKeys(response);
+        // }).catch(err => {
+        //     console.log('ERROR', err.message);
+        //     alert(err.message);
+        //     goBack();
+        // });
     }
     useEffect(() => {
         if(wallet) {
@@ -131,6 +136,39 @@ const BoltCardDetails = () => {
       });
     }
     
+    const backupCardKeys = () => {
+      let filename = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}.json.txt`
+      let filename2 = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}-wipe.json.txt`
+      var path = RNFS.DownloadDirectoryPath + '/'+filename;
+      var path2 = RNFS.DownloadDirectoryPath + '/'+filename2;
+      console.log('path', path);
+      // write the create card key file
+      RNFS.writeFile(path, JSON.stringify(wallet.cardKeys), 'utf8')
+        .then((success) => {
+            // write the wipe card key file
+            RNFS.writeFile(path2, JSON.stringify({
+              version: 1,
+              action: "wipe",
+              k0: wallet.cardKeys.k0,
+              k1: wallet.cardKeys.k1,
+              k2: wallet.cardKeys.k2,
+              k3: wallet.cardKeys.k3,
+              k4: wallet.cardKeys.k4
+            }), 'utf8')
+            .then((success) => {
+              alert('Card keys saved to downloads folder with filenames: \r\n\r\n'+filename+'\r\n'+filename2);
+            })
+            .catch((err) => {
+              console.log(err.message);
+              alert('Error downloading keys: '+err.message);
+            });
+        })
+        .catch((err) => {
+          console.log(err.message);
+          alert('Error downloading keys: '+err.message);
+        });
+    }
+
     return(
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
@@ -141,14 +179,14 @@ const BoltCardDetails = () => {
                     :
                         <>
                             {details && details.uid &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
-                                    <BlueText>{details.uid}</BlueText>
-                                </>
+                              <>
+                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
+                                  <BlueText>{details.uid}</BlueText>
+                              </>
                             }
                             {details && details.tx_limit_sats &&
                                 <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit sats</Text>
+                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
                                     {editMode
                                       ?
                                       <BlueFormTextInput 
@@ -160,43 +198,7 @@ const BoltCardDetails = () => {
                                         }}
                                       />
                                       :
-                                      <BlueText>{details.tx_limit_sats}</BlueText>
-                                    }
-                                </>
-                            }
-
-                            {details && details.lnurlw_enable &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card enabled</Text>
-                                    <BlueText>
-                                      {/* <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={details.lnurlw_enable == 'Y'} /> */}
-                                      {details.lnurlw_enable == 'Y' ? 'Yes' : 'No'}
-                                    </BlueText>
-                                    { !wallet.getWipeData()
-                                      && 
-                                      <>
-                                        {!editMode &&
-                                          <View style={{marginTop: 10}}>
-                                            {details.lnurlw_enable == 'Y' ? 
-                                              <BlueButton
-                                                title="Temporarily Disable Card"
-                                                onPress={() => {
-                                                  enableCard('false')
-                                                }}
-                                                backgroundColor={colors.redBG}
-                                              />
-                                            : 
-                                              <BlueButton
-                                                title="Enable Card"
-                                                onPress={() => {
-                                                  enableCard('true')
-                                                }}
-                                              />
-                                            }
-                                          </View>
-                                        }
-                                      </>
-
+                                      <BlueText style={{fontSize:30}}>{details.tx_limit_sats} sats</BlueText>
                                     }
                                 </>
                             }
@@ -234,7 +236,46 @@ const BoltCardDetails = () => {
                                 </>
 
                             }
+                            {!editMode && details && details.lnurlw_enable &&
+                                <>
+                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Enable / Disable</Text>
+                                    
+                                    { !wallet.getWipeData()
+                                      && 
+                                      <>
+                                        {!editMode &&
+                                          <View style={{marginTop: 10}}>
+                                            {details.lnurlw_enable == 'Y' ? 
+                                              <BlueButton
+                                                title="Temporarily Disable Card"
+                                                onPress={() => {
+                                                  enableCard('false')
+                                                }}
+                                                backgroundColor={colors.redBG}
+                                              />
+                                            : 
+                                              <BlueButton
+                                                title="Enable Card"
+                                                onPress={() => {
+                                                  enableCard('true')
+                                                }}
+                                              />
+                                            }
+                                          </View>
+                                        }
+                                      </>
 
+                                    }
+                                </>
+                            }
+                            
+                            {!editMode && wallet && wallet.cardKeys &&
+                              <>
+                                <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Keys</Text>
+                                <BlueButton icon={{name:'warning', color:"#fff"}} color="#fff" onPress={backupCardKeys} title="Backup Card Keys" />
+                                <BlueText style={{textAlign:'center'}}>Download a key backup of your card to your phone</BlueText>
+                              </>
+                            }
                             {!editMode &&
                               <View style={{alignItems: 'center', marginTop: 30}}>
                                 <TouchableOpacity accessibilityRole="button" onPress={() => {
