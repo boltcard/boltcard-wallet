@@ -5,7 +5,7 @@ import { Image, Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacit
 import { getApplicationName, getBuildNumber, getBundleId, getUniqueId, getVersion, hasGmsSync } from 'react-native-device-info';
 import { Icon } from 'react-native-elements';
 import Rate, { AndroidMarket } from 'react-native-rate';
-import { BlueButton, BlueCard, BlueListItem, BlueSpacing20, BlueTextCentered } from '../../BlueComponents';
+import { BlueButton, BlueCard, BlueListItem, BlueSpacing20, BlueTextCentered, BlueText } from '../../BlueComponents';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
@@ -131,6 +131,21 @@ const About = () => {
             <BlueButton onPress={handleOnRatePress} title={loc.settings.about_review + ' ⭐🙏'} />
           )}
         </View>
+        <BlueText style={{marginTop:10, marginBottom:10, textAlign: 'center'}}>Built By</BlueText>
+        <View style={{flexDirection: 'row', justifyContent: 'space-evenly', backgroundColor:'#fff', paddingTop:20, paddingBottom:20}}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://onesandzeros.nz")}>
+            <Image
+              style={{width: 120, height: 50}}
+              source={require('../../img/OAZ-Logo.png')}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.whitewolftech.com")}>
+            <Image
+              style={{width: 170, height: 50}}
+              source={require('../../img/wwt-on-white-sample.png')}
+            />
+          </TouchableOpacity>
+        </View>
       </BlueCard>
       <BlueListItem
         leftIcon={{
@@ -238,7 +253,7 @@ const About = () => {
       <BlueTextCentered>
         {getApplicationName()} ver {getVersion()} (build {getBuildNumber() + ' ' + branch})
       </BlueTextCentered>
-      {/* <BlueTextCentered>{new Date(getBuildNumber() * 1000).toGMTString()}</BlueTextCentered> */}
+      <BlueTextCentered>{new Date(getBuildNumber() * 1000).toGMTString()}</BlueTextCentered>
       <BlueTextCentered>{getBundleId()}</BlueTextCentered>
       <BlueTextCentered>
         w, h = {width}, {height}

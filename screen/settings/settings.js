@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View, TouchableOpacity, Image } from 'react-native';
 import { Badge } from 'react-native-elements';
 
 import { useFocusEffect } from '@react-navigation/native';
-import { BlueHeaderDefaultSub, BlueListItem } from '../../BlueComponents';
+import { BlueHeaderDefaultSub, BlueListItem, BlueText } from '../../BlueComponents';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { AppStorage } from '../../class';
 import navigationStyle from '../../components/navigationStyle';
@@ -56,6 +56,7 @@ const Settings = () => {
         <BlueListItem title={loc.settings.tools} onPress={() => navigate('Tools')} testID="Tools" chevron />
         <BlueListItem title="Buy Bolt Cards" subtitle="Opens in browser" rightTitle={<Badge value="shop" />} onPress={() => Linking.openURL('https://boltcardwallet.com/buy-bolt-cards')} testID="BuyBoltCards" chevron />
         <BlueListItem title={loc.settings.about} onPress={() => navigate('About')} testID="AboutButton" chevron />
+        
       </ScrollView>
     </>
   );

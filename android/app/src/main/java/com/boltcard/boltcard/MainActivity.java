@@ -162,8 +162,6 @@ public class MainActivity extends ReactActivity {
     private ReactInstanceManager mReactInstanceManager;
 
     private final String CARD_MODE_READ = "read";
-    private final String CARD_MODE_WRITE = "write";
-    private final String CARD_MODE_WRITEKEYS = "writekeys";
     private final String CARD_MODE_RESETKEYS = "resetkeys";
     private final String CARD_MODE_CREATEBOLTCARD = "createBoltcard";
     
@@ -315,13 +313,7 @@ public class MainActivity extends ReactActivity {
         byte[] NTAG424DNA_APP_NAME = {(byte) 0xD2, (byte) 0x76, 0x00, 0x00, (byte) 0x85, 0x01, 0x01};
         boltCardWrapper.isoSelectApplicationByDFName(NTAG424DNA_APP_NAME);
         
-        if(this.cardmode.equals(CARD_MODE_WRITE)) {
-          writeCard(boltCardWrapper);
-        }
-        else if(this.cardmode.equals(CARD_MODE_WRITEKEYS)) {
-          writeKeys(boltCardWrapper);
-        }
-        else if(this.cardmode.equals(CARD_MODE_RESETKEYS)) {
+        if(this.cardmode.equals(CARD_MODE_RESETKEYS)) {
           doresetKeys(boltCardWrapper);
         }
         else if(this.cardmode.equals(CARD_MODE_CREATEBOLTCARD)) {
@@ -354,11 +346,12 @@ public class MainActivity extends ReactActivity {
    * @param intent
    * @return
    */
-  public BoltCardWrapper authenticateWithDefaultChangeKey(BoltCardWrapper boltCardWrapper) throws Exception {
+  public BoltCardWrapper authenticateWithDefaultChangeKey(BoltCardWrapper boltCardWrapper, boolean first) throws Exception {
     KeyData aesKeyData = new KeyData();
     Key keyDefault = new SecretKeySpec(KEY_AES128_DEFAULT, "AES");
     aesKeyData.setKey(keyDefault);
-    boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+    if(first) boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+    else boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
     return boltCardWrapper;
   }
 
@@ -376,19 +369,25 @@ public class MainActivity extends ReactActivity {
       put("cardUID", UID.substring(2));
     }});
     
-    String [] keyChecks = checkKeys(boltCardWrapper);
-    sendEvent("CreateBoltCard",new HashMap<String, String>() {{
-      put("key0Changed", keyChecks[0]);
-      put("key1Changed", keyChecks[1]);
-      put("key2Changed", keyChecks[2]);
-      put("key3Changed", keyChecks[3]);
-      put("key4Changed", keyChecks[4]);
-    }});
-
     //write the NDEF and the file settings
     try {
-      this.authenticateWithDefaultChangeKey(boltCardWrapper);
-      this.writeNDEF(boltCardWrapper);
+      int piccOffset = this.lnurlw_base.length() + 10;
+      int macOffset = this.lnurlw_base.length() + 45;
+      
+      NdefMessageWrapper msg = new NdefMessageWrapper(
+        NdefRecordWrapper.createUri(
+          this.lnurlw_base.indexOf("?") == -1 ? 
+            this.lnurlw_base+"?p=00000000000000000000000000000000&c=0000000000000000"
+          :
+            this.lnurlw_base+"&p=00000000000000000000000000000000&c=0000000000000000"
+        )
+      );
+      boltCardWrapper.writeNDEF(msg);
+
+      this.authenticateWithDefaultChangeKey(boltCardWrapper, true);
+      
+      boltCardWrapper.setAndChangeFileSettings(piccOffset, macOffset);
+
       sendEvent("CreateBoltCard",new HashMap<String, String>() {{
         put("ndefWritten", "success");
       }});
@@ -402,7 +401,7 @@ public class MainActivity extends ReactActivity {
     }
     if (this.randomUID) {
       try {
-        this.authenticateWithDefaultChangeKey(boltCardWrapper);
+        this.authenticateWithDefaultChangeKey(boltCardWrapper, false);
         boltCardWrapper.setPICCConfiguration(this.randomUID);
         sendEvent("CreateBoltCard",new HashMap<String, String>() {{
           put("randomUID", "success");
@@ -568,85 +567,22 @@ public class MainActivity extends ReactActivity {
     }
     else {
 
-      String [] keyChecks = checkKeys(boltCardWrapper);
+      
+      Log.d(TAG, "Keychecks: "+new Byte(boltCardWrapper.getKeyVersion(0)));
 
       WritableMap params = Arguments.createMap();
       params.putString("tagname", tagname);
       params.putString("cardReadInfo", cardDataBuilder);
       params.putString("ndef", bolturl);
-      params.putString("key0Changed", keyChecks[0]);
-      params.putString("key1Changed", keyChecks[1]);
-      params.putString("key2Changed", keyChecks[2]);
-      params.putString("key3Changed", keyChecks[3]);
-      params.putString("key4Changed", keyChecks[4]);
+      params.putString("key0Changed", ""+(new Byte(boltCardWrapper.getKeyVersion(0)).intValue()));
+      params.putString("key1Changed", ""+(new Byte(boltCardWrapper.getKeyVersion(1)).intValue()));
+      params.putString("key2Changed", ""+(new Byte(boltCardWrapper.getKeyVersion(2)).intValue()));
+      params.putString("key3Changed", ""+(new Byte(boltCardWrapper.getKeyVersion(3)).intValue()));
+      params.putString("key4Changed", ""+(new Byte(boltCardWrapper.getKeyVersion(4)).intValue()));
       params.putString("cardUID", UID.substring(2));
       sendEvent("CardHasBeenRead", params);
     }
     
-  }
-
-  public String[] checkKeys(BoltCardWrapper boltCardWrapper) throws Exception {
-   
-    KeyData aesKeyData = new KeyData();
-    Key keyDefault = new SecretKeySpec(KEY_AES128_DEFAULT, "AES");
-    aesKeyData.setKey(keyDefault);
-
-    // String UID = Utilities.dumpBytes(boltCardWrapper.getUID());
-    
-    //Check if auth works to see if key0 is zero.
-    String key0Changed = "unsure";
-    String key1Changed = "unsure";
-    String key2Changed = "unsure";
-    String key3Changed = "unsure";
-    String key4Changed = "unsure";
-
-    try {
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
-      key0Changed="no";
-    }
-    catch(Exception e) {
-      key0Changed="yes";
-    }
-
-    try {
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
-      boltCardWrapper.changeKey(1, KEY_AES128_DEFAULT, KEY_AES128_DEFAULT, (byte) 0);
-      key1Changed="no";
-    }
-    catch(Exception e) {
-      key1Changed = "yes";
-    }
-
-    try {
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
-      boltCardWrapper.changeKey(2, KEY_AES128_DEFAULT, KEY_AES128_DEFAULT, (byte) 0);
-      key2Changed="no";
-    }
-    catch(Exception e) {
-      key2Changed = "yes";
-    }
-    
-
-    //try to change key 3 and 4 from default key to default key
-    try {
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
-      boltCardWrapper.changeKey(3, KEY_AES128_DEFAULT, KEY_AES128_DEFAULT, (byte) 0);
-      key3Changed="no";
-    }
-    catch(Exception e) {
-      key3Changed = "yes";
-    }
-
-    try {
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
-      boltCardWrapper.changeKey(4, KEY_AES128_DEFAULT, KEY_AES128_DEFAULT, (byte) 0);
-      key4Changed="no";
-    }
-    catch(Exception e) {
-      key4Changed = "yes";
-    }
-
-    return new String[]{key0Changed, key1Changed, key2Changed, key3Changed, key4Changed};
   }
 
   public String decrypt(byte[] encryptedData) throws Exception {
@@ -661,55 +597,6 @@ public class MainActivity extends ReactActivity {
   }
 
   /**
-   * Writes the NFC card with the lnurlw:// and domain and path specified, 
-   * sets up PICC and MAC mirroring and sets correct PICC and MAC mirror offsets
-   * 
-   * @param intent
-   * @throws Exception
-   */
-  private void writeCard(BoltCardWrapper boltCardWrapper) throws Exception{
-    String result = "success";
-    try{
-      this.authenticateWithDefaultChangeKey(boltCardWrapper);
-      this.writeNDEF(boltCardWrapper);
-    }
-    catch(Exception e) {
-      result = "Error writing card: "+e.getMessage();
-      Log.d(TAG, e.getMessage());
-    }
-
-    WritableMap params = Arguments.createMap();
-    params.putString("output", result);
-    sendEvent("WriteResult", params);
-  }
-
-  /**
-   * Writes the NDEF and sets the File Settings to enable PICC and MAC with correct offsets
-   * @param intent
-   * @param boltCardWrapper
-   * @throws Exception
-   */
-  private void writeNDEF(BoltCardWrapper boltCardWrapper) throws Exception {
-  
-    int piccOffset = this.lnurlw_base.length() + 10;
-    int macOffset = this.lnurlw_base.length() + 45;
-    
-    NdefMessageWrapper msg = new NdefMessageWrapper(
-      NdefRecordWrapper.createUri(
-        this.lnurlw_base.indexOf("?") == -1 ? 
-          this.lnurlw_base+"?p=00000000000000000000000000000000&c=0000000000000000"
-        :
-          this.lnurlw_base+"&p=00000000000000000000000000000000&c=0000000000000000"
-      )
-    );
-    boltCardWrapper.writeNDEF(msg);
-    
-    this.authenticateWithDefaultChangeKey(boltCardWrapper);
-    boltCardWrapper.setAndChangeFileSettings(piccOffset, macOffset);
-
-  }
-
-  /**
    * Write the keys stored in memory to the NFC card (assmumes default zero byte keys)
    * 
    * @param intent
@@ -717,7 +604,7 @@ public class MainActivity extends ReactActivity {
    */
   private void writeKeys(BoltCardWrapper boltCardWrapper) throws Exception{
     String result = "success";
-    this.authenticateWithDefaultChangeKey(boltCardWrapper);
+    this.authenticateWithDefaultChangeKey(boltCardWrapper, false);
 
     try{
 
@@ -734,24 +621,23 @@ public class MainActivity extends ReactActivity {
       aesKeyData.setKey(keyDefault);
 
       // change key 0 last as this is the change key
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
       boltCardWrapper.changeKey(1, KEY_AES128_DEFAULT, this.key1, (byte) key1newVersion);
       
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
       boltCardWrapper.changeKey(2, KEY_AES128_DEFAULT, this.key2, (byte) key2newVersion);
 
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
       boltCardWrapper.changeKey(3, KEY_AES128_DEFAULT, this.key3, (byte) key3newVersion);
 
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
       boltCardWrapper.changeKey(4, KEY_AES128_DEFAULT, this.key4, (byte) key4newVersion);
 
-      boltCardWrapper.authenticateEV2First(0, aesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, aesKeyData);
       boltCardWrapper.changeKey(0, KEY_AES128_DEFAULT, this.key0, (byte) key0newVersion);
     }
     catch(Exception e) {
       result = "Error changing keys: "+e.getMessage();
-      // Log.d(TAG, "Error changing keys: "+e);
       throw e;
     }
     WritableMap params = Arguments.createMap();
@@ -767,16 +653,6 @@ public class MainActivity extends ReactActivity {
   private void doresetKeys(BoltCardWrapper boltCardWrapper) throws Exception{
     String result = "";
     
-    // String tagname = boltCardWrapper.getType().getTagName() + boltCardWrapper.getType().getDescription();
-    // String UID = Utilities.dumpBytes(boltCardWrapper.getUID());
-    // if(this.uid == null || !UID.substring(2).toLowerCase().equals(this.uid.toLowerCase())) {
-    //   WritableMap params = Arguments.createMap();
-    //   params.putString("output", "Error, card UID does not match entered UID");
-    //   Log.d(TAG,"card UID entered UID: " + UID + ", " + this.uid);
-    //   sendEvent("ChangeKeysResult", params);
-    //   return;
-    // }
-
     if(resetKeys[0] == null || resetKeys[1] == null || resetKeys[2] == null || resetKeys[3] == null || resetKeys[4] == null) {
       WritableMap params = Arguments.createMap();
       params.putString("output", "Error, one or more keys not set");
@@ -819,7 +695,7 @@ public class MainActivity extends ReactActivity {
     }
     
     try{
-      boltCardWrapper.authenticateEV2First(0, defaultaesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, defaultaesKeyData);
       boltCardWrapper.changeKey(2, this.hexStringToByteArray(resetKeys[2]), KEY_AES128_DEFAULT, (byte) keynewVersion);
       result += "Change Key2: Success\r\n";
     }
@@ -828,7 +704,7 @@ public class MainActivity extends ReactActivity {
     }
 
     try{
-      boltCardWrapper.authenticateEV2First(0, defaultaesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, defaultaesKeyData);
       boltCardWrapper.changeKey(3, this.hexStringToByteArray(resetKeys[3]), KEY_AES128_DEFAULT, (byte) keynewVersion);
       result += "Change Key3: Success\r\n";
     }
@@ -837,7 +713,7 @@ public class MainActivity extends ReactActivity {
     }
 
     try{
-      boltCardWrapper.authenticateEV2First(0, defaultaesKeyData, null);
+      boltCardWrapper.authenticateEV2NonFirst(0, defaultaesKeyData);
       boltCardWrapper.changeKey(4, this.hexStringToByteArray(resetKeys[4]), KEY_AES128_DEFAULT, (byte) keynewVersion);
       result += "Change Key4: Success\r\n";
     }
@@ -846,7 +722,7 @@ public class MainActivity extends ReactActivity {
     }
 
     try {
-      this.authenticateWithDefaultChangeKey(boltCardWrapper);
+      this.authenticateWithDefaultChangeKey(boltCardWrapper, false);
       boltCardWrapper.wipeNdefAndFileSettings();
       result += "NDEF and SUN/SDM cleared."; 
     }
@@ -872,7 +748,6 @@ public class MainActivity extends ReactActivity {
    * @param callBack
    */
   public void changeKeys(String lnurlw_base, String key0, String key1, String key2, String key3, String key4, boolean randomUID, Callback callBack) {
-    this.cardmode = CARD_MODE_WRITEKEYS;
     String result = "Success";
     if (lnurlw_base.indexOf("lnurlw://") == -1) {
       Log.e(TAG, "lnurlw_base is not a valid lnurlw");

@@ -408,7 +408,12 @@ const BoltCardCreate = () => {
                                         />
                                         </View>
                                         <BlueText style={styles.label}>Hold your nfc card to the reader.</BlueText>
-                                        <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
+                                        <BlueText style={{...styles.label, fontSize:25}}>
+                                        <Icon name="warning" color="orange" size={30} /> Hold card steady.
+                                        </BlueText>
+                                        <BlueText style={{...styles.label, fontSize:25}}>
+                                        <Icon name="warning" color="orange" size={30} /> Do not remove your card until writing is complete. 
+                                        </BlueText>
                                         <BlueText style={styles.label}><ActivityIndicator size="large" /></BlueText>
                                         {__DEV__ && 
                                             <>
@@ -467,14 +472,14 @@ const BoltCardCreate = () => {
                                     <View style={{fontSize: 30}}>
                                         {testc && testc == "ok" ?
                                             <>
-                                                <Icon name="check" size={80} />
+                                                <Icon name="check" color="#00f" size={80} />
                                                 <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
                                                     Card Connected
                                                 </BlueText>
                                             </>
                                         :
                                             <>
-                                                <Icon name="warning" size={80} />
+                                                <Icon name="warning" color="#00f" size={80} />
                                                 <BlueText style={{fontSize:30, justifyText: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
                                                     Card Write Failed
                                                 </BlueText>
