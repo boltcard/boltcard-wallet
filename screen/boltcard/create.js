@@ -26,6 +26,7 @@ import {
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
+var RNFS = require('react-native-fs');
 
 const BoltCardCreate = () => {
 
@@ -121,6 +122,8 @@ const BoltCardCreate = () => {
                 }
             );
             resetOutput();
+
+            backupCardKeys();
         }
     }, [cardDetails]);
 
@@ -294,6 +297,39 @@ const BoltCardCreate = () => {
         }
         setEnhancedPrivacy(!enhancedPrivacy)
     }
+
+    const backupCardKeys = () => {
+        let filename = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}.json.txt`
+        let filename2 = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}-wipe.json.txt`
+        var path = RNFS.DownloadDirectoryPath + '/'+filename;
+        var path2 = RNFS.DownloadDirectoryPath + '/'+filename2;
+        console.log('path', path);
+        // write the create card key file
+        RNFS.writeFile(path, JSON.stringify(wallet.cardKeys), 'utf8')
+          .then((success) => {
+              // write the wipe card key file
+              RNFS.writeFile(path2, JSON.stringify({
+                version: 1,
+                action: "wipe",
+                k0: wallet.cardKeys.k0,
+                k1: wallet.cardKeys.k1,
+                k2: wallet.cardKeys.k2,
+                k3: wallet.cardKeys.k3,
+                k4: wallet.cardKeys.k4
+              }), 'utf8')
+              .then((success) => {
+                alert('Card keys saved to downloads folder with filenames: \r\n\r\n'+filename+'\r\n'+filename2);
+              })
+              .catch((err) => {
+                console.log(err.message);
+                alert('Error downloading keys: '+err.message);
+              });
+          })
+          .catch((err) => {
+            console.log(err.message);
+            alert('Error downloading keys: '+err.message);
+          });
+      }
 
     const key0display = keys[0] ? keys[0].substring(0, 4)+"............"+ keys[0].substring(28) : "pending...";
     const key1display = keys[1] ? keys[1].substring(0, 4)+"............"+ keys[1].substring(28) : "pending...";
