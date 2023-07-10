@@ -16,7 +16,8 @@ import {
 import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
 import {Icon} from 'react-native-elements';
 import Dialog from 'react-native-dialog';
-import QRCodeComponent from '../../components/QRCodeComponent';
+import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
+import Ntag424 from '../../class/Ntag424';
 
 import {
     BlueLoading,
@@ -104,28 +105,8 @@ const BoltCardDisconnect = () => {
                 error = error + ' Some keys missing, proceed with caution';
             }
             setKeyJsonError(error ? error : false)
-            if(Platform.OS == 'android') enableResetMode(wipeCardDetails.k0, wipeCardDetails.k1, wipeCardDetails.k2, wipeCardDetails.k3, wipeCardDetails.k4, wipeCardDetails.uid);
        }
     }, [wipeCardDetails]);
-
-    useEffect(() => {
-        if(Platform.OS == 'android') {
-            const eventEmitter = new NativeEventEmitter(NativeModules.ToastExample);
-            const eventListener = eventEmitter.addListener('ChangeKeysResult', (event) => {
-                console.log('CHANGE KEYS', event);
-                if(event.status == 'success') {
-                    setCardWiped();
-                }
-                setWriteKeysOutput(event.output);
-    
-                //@todo: ensure card wipe has worked.
-            });
-            
-            return () => {
-            eventListener.remove();
-            };
-        }
-    }, []);
 
     const getWipeKeys = async (wallet) => {
         try {
@@ -143,12 +124,6 @@ const BoltCardDisconnect = () => {
         }
     }, [walletID]);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            if(Platform.OS == 'android') NativeModules.MyReactModule.setCardMode("read");
-        }, [])
-    );
-
     const setCardWiped = async () => {
         console.log('setCardWiped');
         if(wallet) {
@@ -157,88 +132,117 @@ const BoltCardDisconnect = () => {
         }
     }
 
-    const enableResetMode = (k0, k1, k2, k3, k4, carduid) => {
-        NativeModules.MyReactModule.setCardMode("resetkeys");
-        if (k0 && k1 && k2 && k3 && k4 && carduid) {
-            NativeModules.MyReactModule.setResetKeys(k0,k1,k2,k3,k4,carduid, ()=> {
-                //callback
-                console.log("reset keys set");
-            });
-        }
-        else {
-            NativeModules.MyReactModule.setResetKeys(key0,key1,key2,key3,key4,uid, ()=> {
-                //callback
-                console.log("reset keys set");
-            });
-        }
+    const enableResetMode = async () => {
         setWriteKeysOutput(null)
         setResetNow(true);
+        var result = [];
+        console.log('key0', key0);
+        try {
+            // register for the NFC tag with NDEF in it
+            await NfcManager.requestTechnology(NfcTech.IsoDep, {
+                alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed."
+            });
+            
+            const defaultKey = '00000000000000000000000000000000';
+            
+            // //auth first     
+            await Ntag424.AuthEv2First(
+                '00',
+                key0,
+            );
+
+            //reset file settings
+            await Ntag424.resetFileSettings();
+            
+            //change keys
+            await Ntag424.changeKey(
+                '01',
+                key1,
+                defaultKey,
+                '00',
+            );
+            result.push("Change Key1: Success");
+            console.log('changekey 2')
+            await Ntag424.changeKey(
+                '02',
+                key2,
+                defaultKey,
+                '00',
+            );
+            result.push("Change Key2: Success");
+            console.log('changekey 3')
+            await Ntag424.changeKey(
+                '03',
+                key3,
+                defaultKey,
+                '00',
+            );
+            result.push("Change Key3: Success");
+            await Ntag424.changeKey(
+                '04',
+                key4,
+                defaultKey,
+                '00',
+            );
+            result.push("Change Key4: Success");
+            await Ntag424.changeKey(
+                '00',
+                key0,
+                defaultKey,
+                '00',
+            );
+            result = ["Change Key0: Success", ...result];
+
+            const message = [Ndef.uriRecord('')];
+            const bytes = Ndef.encodeMessage(message);
+            await Ntag424.setNdefMessage(bytes);
+
+            result.push("NDEF and SUN/SDM cleared");
+            setCardWiped();
+
+        } catch (ex) {
+            console.error('Oops!', ex, ex.constructor.name);
+            var error = ex;
+            if(typeof ex === 'object') {
+                error = "NFC Error: "+(ex.message? ex.message : ex.constructor.name);
+            }
+            result.push(error);
+            setWriteKeysOutput(error);
+        } finally {
+            // stop the nfc scanning
+            NfcManager.cancelTechnologyRequest();
+            setWriteKeysOutput(result.join('\r\n'));
+            // setResetNow(false);
+        }
     }
 
     const disableResetMode = () => {
-        NativeModules.MyReactModule.setCardMode("read");
         setResetNow(false);
     }
-
-    const disconnectQRCode = () => {
-        const disconnect = wipeCardDetails;
-        console.log('QRCODE', disconnect);
-        return (
-            <>
-                <View style={{marginBottom: 20, marginLeft: 'auto', marginRight: 'auto'}}>
-                    <QRCodeComponent
-                        value={JSON.stringify(disconnect)}
-                        size={300}
-                    />
-                </View>
-                <View style={{marginBottom: 10}}>
-                    <BlueButton
-                        title="Instructions"
-                        onPress={() => {
-                            navigate("BoltCardDisconnectHelp")
-                        }}
-                        backgroundColor={colors.lightButton}
-                    />
-                </View>
-                <BlueButton
-                    title="I've disconnected my card"
-                    onPress={() => {
-                        Alert.alert('I\'ve disconnected my bolt card', 'Please make sure you\'ve disconnected your card before pressing the "OK" button. You won\'t be able to get the wipe key details after clicking this.', [
-                            {
-                              text: 'Cancel',
-                              onPress: () => console.log('Cancel Pressed'),
-                              style: 'cancel',
-                            },
-                            {text: 'OK', onPress: () =>{
-                                setCardWiped();
-                                popToTop();
-                                goBack();
-                            }},
-                        ]);
-                        
-                    }}
-                    // backgroundColor={colors.redBG}
-                />        
-            </>
-        );
-    }
-
+    
     return(
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
                 <View style={styles.scrollBody}>
                     <Dialog.Container visible={resetNow}>
-                        <Dialog.Title style={styles.textBlack}>
-                        <Icon name="creditcard" size={30} color="#000" type="antdesign" /> Tap NFC Card 
-                        </Dialog.Title>
+                        <View style={{flexDirection: "row", marginHorizontal: 20, marginBottom: 20, alignItems: 'center'}}>
+                            <Icon name="creditcard" size={30} color="#000" type="antdesign" style={{marginRight: 10}}/> 
+                            <Dialog.Title style={styles.textBlack}>
+                            Tap NFC Card 
+                            </Dialog.Title>
+
+                        </View>
                         {!writeKeysOutput && <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
                         Hold NFC card to reader when ready 
                         </Text>}
-                        
+                        {writeKeysOutput ? 
                         <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
-                        {writeKeysOutput ? writeKeysOutput : <BlueLoading />}
+                            {writeKeysOutput}
                         </Text>
+                        : 
+                            <BlueLoading />
+                        }
                         <Dialog.Button label="Close"
                         onPress={() => {
                             console.log('wallet', wallet.cardWritten);
@@ -273,9 +277,6 @@ const BoltCardDisconnect = () => {
                             <BlueLoading />
                         : 
                             <>
-                                {Platform.OS == 'ios' &&
-                                    disconnectQRCode()
-                                }
                                 <BlueButton 
                                     style={styles.link}
                                     title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
@@ -350,14 +351,11 @@ const BoltCardDisconnect = () => {
                                     />
                                 </>
                                 }
-                                { Platform.OS == 'android' &&
-                                    <BlueButton 
-                                        style={styles.button}
-                                        title="Reset Again"
-                                        color="#000000"
-                                        onPress={enableResetMode}
-                                    />
-                                }
+                                <BlueButton 
+                                    title="Reset card"
+                                    backgroundColor={colors.redBG}
+                                    onPress={enableResetMode}
+                                />
                             </>
                         }
                     </BlueCard>

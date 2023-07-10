@@ -15,7 +15,8 @@ import {
 import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
 import {Icon, ListItem, Tooltip} from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import QRCodeComponent from '../../components/QRCodeComponent';
+import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
+import Ntag424 from '../../class/Ntag424';
 
 import {
     BlueLoading,
@@ -102,82 +103,9 @@ const BoltCardCreate = () => {
             setKeys([cardDetails.k0,cardDetails.k1,cardDetails.k2,cardDetails.k3,cardDetails.k4])
             setlnurlw_base(cardDetails.lnurlw_base)
             setCardName(cardDetails.card_name)
-
-            console.log('native', NativeModules, NativeModules.MyReactModule);
-            NativeModules.MyReactModule.changeKeys(
-                cardDetails.lnurlw_base,
-                cardDetails.k0, 
-                cardDetails.k1, 
-                cardDetails.k2, 
-                cardDetails.k3, 
-                cardDetails.k4, 
-                cardDetails.uid_privacy != undefined && cardDetails.uid_privacy == "Y", 
-                (response) => {
-                    console.log('Change keys response', response)
-                    if (response == "Success") {
-                        setLoading(false);
-                        setWriteMode(true);
-                    }
-                    NativeModules.MyReactModule.setCardMode('createBoltcard');
-                }
-            );
             resetOutput();
         }
     }, [cardDetails]);
-
-    useEffect(() => {
-        BackHandler.addEventListener('hardwareBackPress', handleBackButton);
-
-        let boltCardEventListener;
-        if(Platform.OS == 'android') {
-            const eventEmitter = new NativeEventEmitter();
-            boltCardEventListener = eventEmitter.addListener('CreateBoltCard', (event) => {
-                console.log('CREATE BOLTCARD LISTENER')
-                if(event.tagTypeError) setTagTypeError(event.tagTypeError);
-                if(event.cardUID) setCardUID(event.cardUID);
-                if(event.tagname) setTagname(event.tagname);
-    
-                if(event.key0Changed) setKey0Changed(event.key0Changed);
-                if(event.key1Changed) setKey1Changed(event.key1Changed);
-                if(event.key2Changed) setKey2Changed(event.key2Changed);
-                if(event.key3Changed) setKey3Changed(event.key3Changed);
-                if(event.key4Changed) setKey4Changed(event.key4Changed);
-                if(event.uid_privacy) setPrivateUID(event.uid_privacy == 'Y');
-    
-                if(event.ndefWritten) setNdefWritten(event.ndefWritten);
-                if(event.writekeys) setWriteKeys(event.writekeys);
-                
-                if(event.readNDEF) {
-                    setNdefRead(event.readNDEF)
-                    //we have the latest read from the card fire it off to the server.
-                    const httpsLNURL = event.readNDEF.replace("lnurlw://", "https://");
-                    fetch(httpsLNURL)
-                        .then((response) => response.json())
-                        .then((json) => {
-                            setTestBolt("success");
-                        })
-                        .catch(error => {
-                            setTestBolt("Error: "+error.message);
-                        });
-                }
-    
-                if(event.testp) setTestp(event.testp);
-                if(event.testc) setTestc(event.testc);
-                
-                NativeModules.MyReactModule.setCardMode('read');
-                setWriteMode(false);
-                //testc is the last value returned from "CreateBoltCard" listner function
-                //if testc is returned, it means the card has been written successfully
-                if(event.testc) setCardWritten('success');
-    
-            });
-        }
-
-        return () => {
-            if(boltCardEventListener) boltCardEventListener.remove();
-            BackHandler.removeEventListener('hardwareBackPress', handleBackButton);
-        };
-    }, []);
 
     const getCardKeys = (wallet) => {
         wallet
@@ -187,29 +115,13 @@ const BoltCardCreate = () => {
                 setCardDetails(keys);
                 wallet.setWipeData(null);
                 saveToDisk();
-            })
-            .catch(err => {
-                console.log('ERROR', err.message);
-                alert(err.message);
-                goBack();
-            });
-    }
-
-    const getCreateUrl = (wallet) => {
-        wallet
-            .createcard()
-            .then(url => {
-                console.log('URL', url);
-                setCreateUrl(url);
-                wallet.setWipeData(null);
-                saveToDisk();
                 setLoading(false);
             })
             .catch(err => {
                 console.log('ERROR', err.message);
                 alert(err.message);
                 goBack();
-            })
+            });
     }
  
     const setCardWritten = async (status) => {
@@ -222,11 +134,7 @@ const BoltCardCreate = () => {
 
     useEffect(() => {
         if(wallet) {
-            if(Platform.OS == 'ios') {
-                getCreateUrl(wallet);
-            } else {
-                getCardKeys(wallet);
-            }
+            getCardKeys(wallet);
         }
     }, [walletID]);
 
@@ -236,12 +144,6 @@ const BoltCardCreate = () => {
             NativeModules.MyReactModule.setNodeURL(text);
         }
     }
-    
-    useFocusEffect(
-        React.useCallback(() => {
-            if(Platform.OS == 'android') NativeModules.MyReactModule.setCardMode("read");
-        }, [])
-    );
 
     const handleBackButton = () => {
         goBack(null);
@@ -261,12 +163,146 @@ const BoltCardCreate = () => {
         setWriteKeys(null);
     }
 
-    const writeAgain = () => {
+    const writeAgain = async () => {
         resetOutput();
-        if(Platform.OS == 'android') {
-            NativeModules.MyReactModule.setCardMode('createBoltcard');
-        }
         setWriteMode(true);
+        try {
+            // register for the NFC tag with NDEF in it
+            await NfcManager.requestTechnology(NfcTech.IsoDep, {
+              alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed."
+            });
+      
+            //set ndef
+            const ndefMessage = lnurlw_base.includes('?')
+              ? lnurlw_base + '&p=00000000000000000000000000000000&c=0000000000000000'
+              : lnurlw_base +
+                '?p=00000000000000000000000000000000&c=0000000000000000';
+      
+      
+            const message = [Ndef.uriRecord(ndefMessage)];
+            const bytes = Ndef.encodeMessage(message);
+      
+            await Ntag424.setNdefMessage(bytes);
+            setNdefWritten('success');
+      
+            const key0 = '00000000000000000000000000000000';
+            // //auth first     
+            await Ntag424.AuthEv2First(
+              '00',
+              key0,
+            );
+      
+            const piccOffset = ndefMessage.indexOf('p=') + 9;
+            const macOffset = ndefMessage.indexOf('c=') + 9;
+            //change file settings
+            await Ntag424.setBoltCardFileSettings(
+              piccOffset,
+              macOffset,
+            );
+            //get uid
+            const uid = await Ntag424.getCardUid();
+            setCardUID(uid);
+            
+            //change keys
+            console.log('key1', keys[1]);
+            await Ntag424.changeKey(
+              '01',
+              key0,
+              keys[1],
+              '01',
+            );
+            setKey1Changed('yes');
+            console.log('key2', keys[2]);
+            await Ntag424.changeKey(
+              '02',
+              key0,
+              keys[2],
+              '01',
+            );
+            setKey2Changed('yes');
+            console.log('key3', keys[3]);
+            await Ntag424.changeKey(
+              '03',
+              key0,
+              keys[3],
+              '01',
+            );
+            setKey3Changed('yes');
+            console.log('key4', keys[4]);
+            await Ntag424.changeKey(
+              '04',
+              key0,
+              keys[4],
+              '01',
+            );
+            setKey4Changed('yes');
+            console.log('key0', keys[0]);
+            await Ntag424.changeKey(
+              '00',
+              key0,
+              keys[0],
+              '01',
+            );
+            setKey0Changed('yes');
+            setWriteKeys('success');
+      
+            //set offset for ndef header
+            const ndef = await Ntag424.readData("060000");
+            const setNdefMessage = Ndef.uri.decodePayload(ndef);
+            setNdefRead(setNdefMessage);
+      
+            //we have the latest read from the card fire it off to the server.
+            const httpsLNURL = setNdefMessage.replace('lnurlw://', 'https://');
+            fetch(httpsLNURL)
+              .then(response => response.json())
+              .then(json => {
+                setTestBolt('success');
+              })
+              .catch(error => {
+                setTestBolt('Error: ' + error.message);
+              });
+      
+            await Ntag424.AuthEv2First(
+              '00',
+              keys[0],
+            );
+      
+            const params = {};
+            setNdefMessage.replace(/[?&]+([^=&]+)=([^&]*)/gi,    
+              function(m,key,value) {
+                params[key] = value;
+              }
+            );
+            if(!"p" in params) {
+              setTestp("no p value to test")
+              return;
+            }
+            if(!"c" in params) {
+              setTestc("no c value to test")
+              return;
+            }
+      
+            const pVal = params['p'];
+            const cVal = params['c'].slice(0,16);
+      
+            const testResult = await Ntag424.testPAndC(pVal, cVal, uid, keys[1], keys[2]);
+            setTestp(testResult.pTest ? 'ok' : 'decrypt with key failed');
+            setTestc(testResult.cTest ? 'ok' : 'decrypt with key failed');
+            setCardWritten('success');
+      
+      
+        } catch (ex) {
+            console.error('Oops!', ex);
+            var error = ex;
+            if(typeof ex === 'object') {
+                error = "NFC Error: "+(ex.message? ex.message : ex.constructor.name);
+            }
+            setTagTypeError(error);
+        } finally {
+            // stop the nfc scanning
+            NfcManager.cancelTechnologyRequest();
+            setWriteMode(false);
+        }
     }
 
     const showTickOrError = (good) => {
@@ -274,6 +310,7 @@ const BoltCardCreate = () => {
     }
 
     const togglePrivacy = () => {
+        //@TODO: random uid
         if(Platform.OS == 'android') {
             NativeModules.MyReactModule.changeKeys(
                 cardDetails.lnurlw_base,
@@ -302,81 +339,6 @@ const BoltCardCreate = () => {
     const key3display = keys[3] ? keys[3].substring(0, 4)+"............"+ keys[3].substring(28) : "pending...";
     const key4display = keys[4] ? keys[4].substring(0, 4)+"............"+ keys[4].substring(28) : "pending...";
 
-    const CreateBoltCardQRCode = () => {
-        if(createUrl) {
-            return (
-                <>  
-                    <View style={{marginBottom: 30, marginLeft: 'auto', marginRight: 'auto'}}>
-                        <QRCodeComponent
-                            value={createUrl}
-                            size={300}
-                        />
-                    </View>
-                    <Text style={{marginBottom: 20, fontSize: 15, textAlign: 'center'}}>The QR Code can be scanned only once. Make sure you have your card ready to be written.</Text>
-                    <View style={{marginBottom: 10}}>
-                        <BlueButton
-                            title="Instructions"
-                            onPress={() => {
-                                navigate("BoltCardCreateHelp")
-                            }}
-                            backgroundColor={colors.lightButton}
-                        />
-                    </View>
-                    <View style={{marginBottom: 10}}>
-                        <BlueButton
-                            title="I've connected my card"
-                            onPress={async () => {
-                                try {
-                                    const card = await wallet.getCardDetails(true);
-                                    if(card && card.uid) {
-                                        console.log('Connected');
-                                        alert('Card connected to the wallet');
-                                        goBack();
-                                    } else {
-                                        alert("Check if your card has been connected correctly.");
-                                    }
-
-                                } catch(e) {
-                                    alert("Check if your card has been connected correctly.");
-                                }
-                            }}
-                        />
-                    </View>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <BlueButton
-                            title="Generate new QR code"
-                            onPress={async () => {
-                                setLoading(true);
-                                try {
-                                    const newUrl = await wallet.regenerateCardUrl();
-                                    setCreateUrl(newUrl);
-                                    wallet.setWipeData(null);
-                                    saveToDisk();
-                                    setLoading(false);
-                                } catch(e) {
-                                    console.log(e);
-                                    setLoading(false);
-                                    alert(e.message);
-                                }
-                            }}
-                            backgroundColor={colors.redBG}
-                        />
-                        <View style={{marginLeft: 5}}>
-                            <Tooltip 
-                                popover={<Text>Click this button if you have already scanned the QR code once and are getting an error message "one time code was used"</Text>}
-                                width={250}
-                                height={100}
-                                backgroundColor={colors.mainColor}
-                            >
-                                <Icon name="help-outline" type="material" size={22} color="#000" />
-                            </Tooltip>
-                        </View>
-                    </View>
-                </>
-            );
-        }
-        return null;
-    }
     return(
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
@@ -390,51 +352,7 @@ const BoltCardCreate = () => {
                             </>
                         :
                             <>
-                                {
-                                    Platform.OS == 'ios' ?
-                                        CreateBoltCardQRCode()
-                                    :
-                                    null
-                                }
-                                {writeMode ? 
-                                    <>
-                                        <BlueText style={styles.label}>Ready to write</BlueText>
-                                        <BlueText style={styles.label}>
-                                        <Image 
-                                            source={(() => {
-                                            return require('../../img/bolt-card-link.png');
-                                            })()} style={{width: 40, height: 30, marginTop:20}}
-                                        />
-                                        </BlueText>
-                                        <BlueText style={styles.label}>Tap and hold your nfc card to the reader.</BlueText>
-                                        <BlueText style={styles.label}><BlueLoading /></BlueText>
-                                        <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
-                                        <BlueText style={{borderWidth:1, borderColor:'#fff', paddingHorizontal:5}} onPress={()=>togglePrivacy()}>
-                                            <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
-                                            Enable Private UID (Hides card UID. One-way operation, can't undo)
-                                        </BlueText>
-                                        <BlueButton 
-                                            style={styles.link}
-                                            title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
-                                            onPress={() => setShowDetails(!showDetails)}
-                                        />
-                                        {showDetails && 
-                                        <View>
-                                            <BlueText style={styles.monospace}>lnurl:</BlueText>
-                                            <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
-                                            <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
-                                            <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
-                                        </View>
-                                        }
-                                    </>
-                                : 
-                                    null
-                                }
-                                {cardUID && 
+                                {cardUID ? 
                                     <View style={{fontSize: 30}}>
                                             <Text>Output:</Text>
                                             {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
@@ -455,19 +373,72 @@ const BoltCardCreate = () => {
 
                                             {writekeys == "success" ? 
                                                 <BlueButton 
-                                                    style={styles.link}
-                                                    title="Go back"
-                                                    onPress={goBack}
+                                                style={styles.link}
+                                                title="Go back"
+                                                onPress={goBack}
                                                 />
-                                            :
+                                                :
                                                 <BlueButton 
-                                                    style={styles.link}
-                                                    title="Retry"
-                                                    onPress={writeAgain}
+                                                style={styles.link}
+                                                title="Retry"
+                                                onPress={writeAgain}
                                                 />
                                             }
                                     </View>
+                                    :
+                                    <>
+                                        {
+                                            cardDetails ? 
+                                            <>
+                                                <BlueText style={styles.label}>Ready to write</BlueText>
+                                                <View style={{textAlign: 'center', marginBottom: 24}}>
+                                                    <Image 
+                                                        source={(() => {
+                                                        return require('../../img/bolt-card-link.png');
+                                                        })()} style={{width: 40, height: 30, marginTop:20, resizeMode: 'cover', marginHorizontal: 'auto'}}
+                                                    />
+                                                </View>
+                                                {
+                                                    writeMode ? 
+                                                        <>
+                                                            <BlueText style={styles.label}>Tap and hold your nfc card to the reader.</BlueText>
+                                                            <BlueText style={styles.label}><BlueLoading /></BlueText>
+                                                            <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
+                                                        </>
+                                                    :
+                                                    <>
+                                                        <BlueButton title="Write" onPress={writeAgain}/>
+                                                    </>
+                                                }
+                                                <>
+                                                    <BlueText style={{borderWidth:1, borderColor:'#fff', paddingHorizontal:5}} onPress={()=>togglePrivacy()}>
+                                                        <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} disabled={writeMode}/>
+                                                        Enable Private UID (Hides card UID. One-way operation, can't undo)
+                                                    </BlueText>
+                                                    <BlueButton 
+                                                        style={styles.link}
+                                                        title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
+                                                        onPress={() => setShowDetails(!showDetails)}
+                                                    />
+                                                    {showDetails && 
+                                                    <View>
+                                                        <BlueText style={styles.monospace}>lnurl:</BlueText>
+                                                        <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
+                                                        <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
+                                                        <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
+                                                        <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
+                                                        <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
+                                                        <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
+                                                        <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
+                                                    </View>
+                                                    }
+                                                </>
+                                            </>
+                                            :
+                                            <Text>Error getting bolt card details.</Text>
+                                        }
 
+                                    </>
                                 }
                             
                             </>
