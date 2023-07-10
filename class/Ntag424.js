@@ -510,7 +510,7 @@ Ntag424.changeKey = async (
       new WordArray.init(newKeyBytes),
     ).words;
     const oldNewXor = bytesToHex(oldNewXorBytes);
-    const crc32Reversed = crc.crcjam(newKeyBytes).toString(16);
+    const crc32Reversed = (crc.crcjam(newKeyBytes).toString(16)).padStart(8, "0");
     const crc32 = bytesToHex(hexToBytes(crc32Reversed).reverse());
     keyData = padForEnc(oldNewXor + keyVersion + crc32, 32); //32 bytes
   }
