@@ -193,7 +193,11 @@ const BoltCardCreate = () => {
               '00',
               key0,
             );
-      
+
+            if(enhancedPrivacy) {
+                await Ntag424.setPrivateUid();
+            }
+            
             const piccOffset = ndefMessage.indexOf('p=') + 9;
             const macOffset = ndefMessage.indexOf('c=') + 9;
             //change file settings
@@ -315,26 +319,6 @@ const BoltCardCreate = () => {
     }
 
     const togglePrivacy = () => {
-        //@TODO: random uid
-        if(Platform.OS == 'android') {
-            NativeModules.MyReactModule.changeKeys(
-                cardDetails.lnurlw_base,
-                cardDetails.k0, 
-                cardDetails.k1, 
-                cardDetails.k2, 
-                cardDetails.k3, 
-                cardDetails.k4, 
-                !enhancedPrivacy, 
-                (response) => {
-                    console.log('Change keys response', response)
-                    if (response == "Success") {
-                        setLoading(false);
-                        setWriteMode(true);
-                    }
-                    NativeModules.MyReactModule.setCardMode('createBoltcard');
-                }
-            );
-        }
         setEnhancedPrivacy(!enhancedPrivacy)
     }
 
