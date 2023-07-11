@@ -13,7 +13,7 @@ import {
     TouchableOpacity
 } from 'react-native';
 import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
-import {Icon, ListItem, Tooltip} from 'react-native-elements';
+import {Icon, ListItem, CheckBox} from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
 import Ntag424 from '../../class/Ntag424';
@@ -149,6 +149,8 @@ const BoltCardCreate = () => {
         goBack(null);
         return true;
     };
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
     const resetOutput = () => {
         setTagTypeError(null);
@@ -292,7 +294,7 @@ const BoltCardCreate = () => {
       
       
         } catch (ex) {
-            console.error('Oops!', ex);
+            console.error('Oops!', ex, ex.message);
             var error = ex;
             if(typeof ex === 'object') {
                 error = "NFC Error: "+(ex.message? ex.message : ex.constructor.name);
@@ -300,7 +302,10 @@ const BoltCardCreate = () => {
             setTagTypeError(error);
         } finally {
             // stop the nfc scanning
-            NfcManager.cancelTechnologyRequest();
+            await NfcManager.cancelTechnologyRequest();
+            //delay 1.5 sec after canceling to prevent users calling the requestTechnology function right away.
+            //if the request function gets called right after the cancel call, it returns duplicate registration error later
+            await delay(1500);
             setWriteMode(false);
         }
     }
@@ -402,7 +407,7 @@ const BoltCardCreate = () => {
                                                     writeMode ? 
                                                         <>
                                                             <BlueText style={styles.label}>Tap and hold your nfc card to the reader.</BlueText>
-                                                            <BlueText style={styles.label}><BlueLoading /></BlueText>
+                                                            <BlueLoading style={{flex: 'auto', marginBottom: 30}}/>
                                                             <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
                                                         </>
                                                     :
@@ -410,11 +415,17 @@ const BoltCardCreate = () => {
                                                         <BlueButton title="Write" onPress={writeAgain}/>
                                                     </>
                                                 }
-                                                <>
-                                                    <BlueText style={{borderWidth:1, borderColor:'#fff', paddingHorizontal:5}} onPress={()=>togglePrivacy()}>
-                                                        <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} disabled={writeMode}/>
-                                                        Enable Private UID (Hides card UID. One-way operation, can't undo)
-                                                    </BlueText>
+                                                <>  
+                                                    <View style={{paddingHorizontal:5, marginVertical: 10}}>
+                                                        <CheckBox 
+                                                            center 
+                                                            checkedColor="#0070FF" 
+                                                            checked={enhancedPrivacy} 
+                                                            onPress={togglePrivacy} 
+                                                            disabled={writeMode}
+                                                            title="Enable Private UID (Hides card UID. One-way operation, can't undo)" 
+                                                        />
+                                                    </View>
                                                     <BlueButton 
                                                         style={styles.link}
                                                         title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}

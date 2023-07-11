@@ -132,6 +132,8 @@ const BoltCardDisconnect = () => {
         }
     }
 
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
     const enableResetMode = async () => {
         setWriteKeysOutput(null)
         setResetNow(true);
@@ -211,6 +213,7 @@ const BoltCardDisconnect = () => {
         } finally {
             // stop the nfc scanning
             NfcManager.cancelTechnologyRequest();
+            delay(1500);
             setWriteKeysOutput(result.join('\r\n'));
             // setResetNow(false);
         }
@@ -237,12 +240,15 @@ const BoltCardDisconnect = () => {
                         Hold NFC card to reader when ready 
                         </Text>}
                         {writeKeysOutput ? 
-                        <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
+                        <Text style={{fontSize:19, textAlign: 'center', borderColor:'black', marginBottom: 20, lineHeight: 25}}>
                             {writeKeysOutput}
                         </Text>
-                        : 
-                            <BlueLoading />
+                        :   
+                            <View style={{height: 40}}>
+                                <BlueLoading />
+                            </View>
                         }
+                        
                         <Dialog.Button label="Close"
                         onPress={() => {
                             console.log('wallet', wallet.cardWritten);
