@@ -757,7 +757,7 @@
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
-				6DFC806E24EA0B6C007B8700 /* XCRemoteSwiftPackageReference "EFQRCode" */,
+				6DFC806E24EA0B6C007B8700 /* RemoteSwiftPackageReference */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -1131,7 +1131,7 @@
 				CODE_SIGN_ENTITLEMENTS = BoltCardWallet/BoltCardWallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 0;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = G2LFSW78NA;
 				ENABLE_BITCODE = NO;
@@ -1185,7 +1185,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = G2LFSW78NA;
 				ENABLE_BITCODE = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1536,7 +1536,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		6DFC806E24EA0B6C007B8700 /* XCRemoteSwiftPackageReference "EFQRCode" */ = {
+		6DFC806E24EA0B6C007B8700 /* RemoteSwiftPackageReference */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/EFPrefix/EFQRCode.git";
 			requirement = {
