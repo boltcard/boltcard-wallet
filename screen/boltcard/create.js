@@ -380,10 +380,10 @@ const BoltCardCreate = () => {
                                             cardDetails ? 
                                             <>
                                                 <BlueText style={styles.label}>Ready to write</BlueText>
-                                                <View style={{textAlign: 'center', marginBottom: 24}}>
+                                                <View style={{alignItems: 'center', marginBottom: 24}}>
                                                     <Image 
                                                         source={(() => {
-                                                        return require('../../img/bolt-card-link.png');
+                                                        return require('../../img/bolt-card-link_black.png');
                                                         })()} style={{width: 40, height: 30, marginTop:20, resizeMode: 'cover', marginHorizontal: 'auto'}}
                                                     />
                                                 </View>
