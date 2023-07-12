@@ -96,6 +96,8 @@ const BoltCardCreate = () => {
     const [testc, setTestc] = useState();
     const [testBolt, setTestBolt] = useState();
 
+    const [writingCard, setWritingCard] = useState(false);
+
     const [enhancedPrivacy, setEnhancedPrivacy] = useState(false);
 
     useEffect(() => {
@@ -168,6 +170,7 @@ const BoltCardCreate = () => {
     const writeAgain = async () => {
         resetOutput();
         setWriteMode(true);
+        setWritingCard(true);
         try {
             // register for the NFC tag with NDEF in it
             await NfcManager.requestTechnology(NfcTech.IsoDep, {
@@ -307,6 +310,7 @@ const BoltCardCreate = () => {
         } finally {
             // stop the nfc scanning
             await NfcManager.cancelTechnologyRequest();
+            setWritingCard(false);
             //delay 1.5 sec after canceling to prevent users calling the requestTechnology function right away.
             //if the request function gets called right after the cancel call, it returns duplicate registration error later
             await delay(1500);
@@ -360,18 +364,27 @@ const BoltCardCreate = () => {
                                             {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
                                             {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
 
-                                            {writekeys == "success" ? 
-                                                <BlueButton 
-                                                style={styles.link}
-                                                title="Go back"
-                                                onPress={goBack}
-                                                />
+                                            {writingCard ? 
+                                                <View style={{marginVertical: 20}}>
+                                                    <BlueLoading style={{marginBottom: 15}}/>
+                                                    <BlueText>Programming your bolt card...</BlueText>
+                                                </View>
                                                 :
-                                                <BlueButton 
-                                                style={styles.link}
-                                                title="Retry"
-                                                onPress={writeAgain}
-                                                />
+                                                <>
+                                                    {writekeys == "success" ? 
+                                                        <BlueButton 
+                                                        style={styles.link}
+                                                        title="Go back"
+                                                        onPress={goBack}
+                                                        />
+                                                        :
+                                                        <BlueButton 
+                                                        style={styles.link}
+                                                        title="Retry"
+                                                        onPress={writeAgain}
+                                                        />
+                                                    }
+                                                </>
                                             }
                                     </View>
                                     :
@@ -391,7 +404,7 @@ const BoltCardCreate = () => {
                                                     writeMode ? 
                                                         <>
                                                             <BlueText style={styles.label}>Tap and hold your nfc card to the reader.</BlueText>
-                                                            <BlueLoading style={{flex: 'auto', marginBottom: 30}}/>
+                                                            <BlueLoading style={{marginBottom: 30}}/>
                                                             <BlueText style={styles.label}>Do not remove your card until writing is complete.</BlueText>
                                                         </>
                                                     :
