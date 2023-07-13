@@ -1,33 +1,32 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
 import {
-    NativeEventEmitter, 
-    NativeModules,  
-    StyleSheet, 
-    Text, 
-    View,
-    StatusBar,
-    ScrollView,
-    TextInput,
-    Image,
-    Platform,
+    ActivityIndicator,
     Alert,
-    TouchableOpacity
+    NativeEventEmitter,
+    NativeModules,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
-import { useNavigation, useRoute, useTheme, useFocusEffect } from '@react-navigation/native';
-import {Icon} from 'react-native-elements';
 import Dialog from 'react-native-dialog';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
 import Ntag424 from '../../class/Ntag424';
+import { Icon } from 'react-native-elements';
 
 import {
-    BlueLoading,
+    BlueButton,
     BlueCard,
-    BlueText,
-    BlueButton
+    BlueLoading,
+    BlueText
 } from '../../BlueComponents';
-import navigationStyle from '../../components/navigationStyle';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
+import navigationStyle from '../../components/navigationStyle';
 
 const defaultKey = "00000000000000000000000000000000";
 
@@ -229,26 +228,26 @@ const BoltCardDisconnect = () => {
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
                 <View style={styles.scrollBody}>
                     <Dialog.Container visible={resetNow}>
-                        <View style={{flexDirection: "row", marginHorizontal: 20, marginBottom: 20, alignItems: 'center'}}>
-                            <Icon name="creditcard" size={30} color="#000" type="antdesign" style={{marginRight: 10}}/> 
-                            <Dialog.Title style={styles.textBlack}>
-                            Tap NFC Card 
-                            </Dialog.Title>
-
-                        </View>
+                        <Dialog.Title style={styles.textBlack}>
+                            <Icon name="creditcard" size={30} color="#000" type="antdesign" /> Hold NFC Card
+                        </Dialog.Title>
                         {!writeKeysOutput && <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
-                        Hold NFC card to reader when ready 
+                        Hold the bolt card to the reader until the reset has completed
                         </Text>}
-                        {writeKeysOutput ? 
-                        <Text style={{fontSize:19, textAlign: 'center', borderColor:'black', marginBottom: 20, lineHeight: 25}}>
-                            {writeKeysOutput}
-                        </Text>
-                        :   
-                            <View style={{height: 40}}>
-                                <BlueLoading />
-                            </View>
-                        }
                         
+                        <View style={{fontSize:20, borderColor:'black', alignItems: 'center', marginVertical: 15}}>
+                            <Text>
+                                {writeKeysOutput ? writeKeysOutput : <ActivityIndicator size="large" />}
+                            </Text>
+                        </View>
+                        {__DEV__ && <BlueButton
+                                    onPress={()=> {
+                                        setCardWiped(); 
+                                        setWriteKeysOutput("Card has been wiped");
+
+                                    }}
+                                    title="Simulate disconnect" 
+                                />}
                         <Dialog.Button label="Close"
                         onPress={() => {
                             console.log('wallet', wallet.cardWritten);
@@ -283,6 +282,12 @@ const BoltCardDisconnect = () => {
                             <BlueLoading />
                         : 
                             <>
+                                {__DEV__ && <BlueButton
+                                    onPress={()=> {
+                                        setCardWiped();  
+                                    }}
+                                    title="Simulate disconnect" 
+                                />}
                                 <BlueButton 
                                     style={styles.link}
                                     title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
@@ -293,73 +298,29 @@ const BoltCardDisconnect = () => {
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 0</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key0} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey0(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key0}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 1</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key1} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey1(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key1}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 2</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key2} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey2(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key2}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 3</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key3} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey3(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key3}</BlueText>
                                     <View style={styles.titlecontainer}>
                                         <Text style={styles.title}>Key 4</Text>
                                     </View>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        value={key4} 
-                                        maxLength={32}
-                                        multiline = {true}
-                                        numberOfLines = {1}
-                                        autoCapitalize='none'
-                                        onChangeText={(text) => setKey4(text)}
-                                        placeholder={defaultKey}
-                                    />
+                                    <BlueText>{key4}</BlueText>
+
                                 </>
                                 }
                                 <BlueButton 
-                                    title="Reset card"
-                                    backgroundColor={colors.redBG}
+                                    title="Reset"
+                                    color="#000000"
                                     onPress={enableResetMode}
                                 />
                             </>

@@ -83,3 +83,7 @@ artifacts/
 *.realm.lock
 
 .env
+
+
+.settings
+org.eclipse.buildship.core.prefs
