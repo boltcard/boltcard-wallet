@@ -117,13 +117,13 @@ const BoltCardDetails = () => {
       if(details && details.pin_enable) {
         setUsePin(details.pin_enable == 'Y' ? true : false);
       }
-      // if(details && details.pin_limit_sats) {
-      //   setPinLimitSats(details.pin_limit_sats);
-      // }
+      if(details && details.pin_limit_sats) {
+        setPinLimitSats(details.pin_limit_sats);
+      }
     }, [details]);
 
     const updateCard = () => {
-      wallet.updateCard(txMax, usePin, pinNumber).then(response => {
+      wallet.updateCard(txMax, pinLimitSats).then(response => {
         console.log('UPDATE CARD RESPONSE ', response);
         fetchCardDetails(wallet, true);
         setEditMode(false);
@@ -181,30 +181,51 @@ const BoltCardDetails = () => {
                         <BlueText>Loading....</BlueText> 
                     :
                         <>
-                            {details && details.uid &&
-                              <>
-                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
-                                  <BlueText>{details.uid}</BlueText>
-                              </>
-                            }
-                            {details && details.tx_limit_sats &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
-                                    {editMode
-                                      ?
-                                      <BlueFormTextInput 
-                                        keyboardType = 'numeric' 
-                                        value={txMax.toString()} 
-                                        onChangeText={(value) => {
-                                          var newVal = value.replace(/[^0-9]/, '');
-                                          setTxMax(newVal);
-                                        }}
-                                      />
-                                      :
-                                      <BlueText>{details.tx_limit_sats} sats</BlueText>
-                                    }
-                                </>
-                            }
+                            <View style={{marginBottom: 15}}>
+                                {details && details.uid &&
+                                  <>
+                                      <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
+                                      <BlueText>{details.uid}</BlueText>
+                                  </>
+                                }
+                                {details && details.tx_limit_sats &&
+                                    <>
+                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
+                                        {editMode
+                                          ?
+                                          <BlueFormTextInput 
+                                            keyboardType = 'numeric' 
+                                            value={txMax.toString()} 
+                                            onChangeText={(value) => {
+                                              var newVal = value.replace(/[^0-9]/, '');
+                                              setTxMax(newVal);
+                                            }}
+                                          />
+                                          :
+                                          <BlueText>{details.tx_limit_sats} sats</BlueText>
+                                        }
+                                    </>
+                                }
+                                {details && details.pin_limit_sats &&
+                                    <>
+                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>PIN limit</Text>
+                                        {editMode
+                                          ?
+                                          <BlueFormTextInput 
+                                            keyboardType = 'numeric' 
+                                            value={pinLimitSats.toString()} 
+                                            onChangeText={(value) => {
+                                              var newVal = value.replace(/[^0-9]/, '');
+                                              setPinLimitSats(newVal);
+                                            }}
+                                          />
+                                          :
+                                          <BlueText>{details.pin_limit_sats} sats</BlueText>
+                                        }
+                                    </>
+                                }
+
+                            </View>
                             {
                               wallet.getWipeData()
                               ?
