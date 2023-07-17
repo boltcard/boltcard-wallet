@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { CheckBox } from 'react-native-elements';
 
 import {
   BlueButton,
@@ -74,11 +75,14 @@ const BoltCardDetails = () => {
     const [cardKeys, setCardKeys] = useState();
 
     const [txMax, setTxMax] = useState(0);
+    const [pinEnabled, setPinEnabled] = useState(false);
+    const [pinLimitSats, setPinLimitSats] = useState(0);
 
     const fetchCardDetails = async (w, reload = false) => {
         setLoading(true);
         w.getCardDetails(reload)
             .then(response => {
+                // console.log('details', response);
                 setDetails(response);
                 saveToDisk();
                 setLoading(false);
@@ -107,10 +111,16 @@ const BoltCardDetails = () => {
       if(details && details.tx_limit_sats) {
         setTxMax(details.tx_limit_sats);
       }
+      if(details && details.pin_enable) {
+        setPinEnabled(details.pin_enable == "Y" ? true : false);
+      }
+      if(details && details.pin_limit_sats) {
+        setPinLimitSats(details.pin_limit_sats);
+      }
     }, [details]);
 
     const updateCard = () => {
-      wallet.updateCard(txMax).then(response => {
+      wallet.updateCard(txMax, pinEnabled, pinEnabled ? pinLimitSats : details.pin_limit_sats).then(response => {
         console.log('UPDATE CARD RESPONSE ', response);
         fetchCardDetails(wallet, true);
         setEditMode(false);
@@ -146,31 +156,73 @@ const BoltCardDetails = () => {
                     {loading ?
                         <BlueText>Loading....</BlueText> 
                     :
-                        <>
-                            {details && details.uid &&
-                              <>
-                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
-                                  <BlueText>{details.uid}</BlueText>
-                              </>
-                            }
-                            {details && details.tx_limit_sats &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
-                                    {editMode
-                                      ?
-                                      <BlueFormTextInput 
-                                        keyboardType = 'numeric' 
-                                        value={txMax.toString()} 
-                                        onChangeText={(value) => {
-                                          var newVal = value.replace(/[^0-9]/, '');
-                                          setTxMax(newVal);
-                                        }}
-                                      />
-                                      :
-                                      <BlueText style={{fontSize:30}}>{details.tx_limit_sats} sats</BlueText>
-                                    }
-                                </>
-                            }
+                        <>  
+                            <View style={{marginBottom: 15}}>
+                                {details && details.uid &&
+                                  <>
+                                      <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
+                                      <BlueText>{details.uid}</BlueText>
+                                  </>
+                                }
+                                {details && details.tx_limit_sats &&
+                                    <>
+                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
+                                        {editMode
+                                          ?
+                                          <BlueFormTextInput 
+                                            keyboardType = 'numeric' 
+                                            value={txMax.toString()} 
+                                            onChangeText={(value) => {
+                                              var newVal = value.replace(/[^0-9]/, '');
+                                              setTxMax(newVal);
+                                            }}
+                                          />
+                                          :
+                                          <BlueText style={{fontSize:30}}>{details.tx_limit_sats} sats</BlueText>
+                                        }
+                                    </>
+                                }
+                                {details && details.pin_enable &&
+                                    <>
+                                        {editMode
+                                          ?
+                                          <CheckBox
+                                              checkedColor="#0070FF" 
+                                              checked={pinEnabled} 
+                                              onPress={() => {setPinEnabled(!pinEnabled)}}
+                                              title="Enable PIN" 
+                                              containerStyle={{marginLeft: 0, marginRight: 0}}
+                                          />
+                                          :
+                                          <>
+                                            <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Pin Enabled</Text>
+                                            <BlueText style={{fontSize:30}}>{details.pin_enable == 'Y' ? 'YES' : 'NO'}</BlueText>
+                                          </>
+                                        }
+                                    </>
+                                }
+                                {details && pinEnabled && details.pin_limit_sats &&
+                                    <>
+                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Pin Limit Sats</Text>
+                                        {editMode
+                                          ?
+                                          <BlueFormTextInput 
+                                            keyboardType = 'numeric' 
+                                            value={pinLimitSats.toString()} 
+                                            onChangeText={(value) => {
+                                              var newVal = value.replace(/[^0-9]/, '');
+                                              setPinLimitSats(newVal);
+                                            }}
+                                          />
+                                          :
+                                          <>
+                                            <BlueText style={{fontSize:30}}>{details.pin_limit_sats} sats</BlueText>
+                                          </>
+                                        }
+                                    </>
+                                }
+
+                            </View>
                             {
                               wallet.getWipeData()
                               ?

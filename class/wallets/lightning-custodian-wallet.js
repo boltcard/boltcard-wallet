@@ -889,6 +889,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         card_name: login+':'+password,
         tx_max: this.cardDetails.tx_limit_sats,
         day_max: this.cardDetails.day_limit_sats,
+        enable_pin: this.cardDetails.enable_pin ? 'true' : 'false'
       }
     });
 
@@ -905,7 +906,7 @@ export class LightningCustodianWallet extends LegacyWallet {
     return this.cardEnabled = status;
   }
 
-  async updateCard(tx_max) {
+  async updateCard(tx_max, pin_enable = 'false', pin_limit_sats = 0) {
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
@@ -939,6 +940,8 @@ export class LightningCustodianWallet extends LegacyWallet {
         tx_max: tx_max,
         //dont update the day_limit_says
         day_max: this.cardDetails.day_limit_sats,
+        enable_pin: pin_enable,
+        pin_limit_sats: pin_limit_sats
       }
     });
 
