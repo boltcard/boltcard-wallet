@@ -485,12 +485,18 @@ const BoltCardCreate = () => {
                                               onPress={() => setShowDetails(!showDetails)}
                                           />
                                           {showDetails && <>
-                                              <BlueText style={{borderWidth:1, borderColor:'#999', padding:10}} onPress={()=>togglePrivacy()}>
-                                                  <ListItem.CheckBox checkedColor="#0070FF" checkedIcon="check" checked={enhancedPrivacy} onPress={()=>togglePrivacy()} />
-                                                  Enable Private UID (Hides card UID. One-way operation, can't undo)
-                                              </BlueText>
+                                              <View style={{paddingHorizontal:5, marginVertical: 10}}>
+                                                   <CheckBox 
+                                                        center 
+                                                        checkedColor="#0070FF" 
+                                                        checked={enhancedPrivacy} 
+                                                        onPress={togglePrivacy} 
+                                                        disabled={writeMode}
+                                                        title="Enable Private UID (Hides card UID. One-way operation, can't undo)" 
+                                                    />
+                                              </View>
                                               
-                                              <View>
+                                              <View style={{marginBottom: 20}}>
                                                   <BlueText style={styles.monospace}>lnurl:</BlueText>
                                                   <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
                                                   <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
