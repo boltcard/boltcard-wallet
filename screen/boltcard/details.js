@@ -8,11 +8,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  TouchableWithoutFeedback
 } from 'react-native';
-import { CheckBox } from 'react-native-elements';
 
 import {
+  BlueListItem,
   BlueButton,
   BlueFormTextInput,
   BlueText
@@ -20,6 +21,7 @@ import {
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
+import { ListItem } from 'react-native-elements';
 
 
 
@@ -73,25 +75,26 @@ const BoltCardDetails = () => {
     const [details, setDetails] = useState({});
     const [editMode, setEditMode] = useState(false);
     const [cardKeys, setCardKeys] = useState();
+    const [usePin, setUsePin] = useState();
+    const [pinNumber, setPinNumber] = useState();
 
     const [txMax, setTxMax] = useState(0);
-    const [pinEnabled, setPinEnabled] = useState(false);
     const [pinLimitSats, setPinLimitSats] = useState(0);
 
     const fetchCardDetails = async (w, reload = false) => {
-        setLoading(true);
-        w.getCardDetails(reload)
-            .then(response => {
-                // console.log('details', response);
-                setDetails(response);
-                saveToDisk();
-                setLoading(false);
-            })
-            .catch(err => {
-                console.log('ERROR', err.message);
-                alert(err.message);
-                goBack();
-            });
+      setLoading(true);
+      w.getCardDetails(reload)
+        .then(response => {
+            // console.log('details', response);
+            setDetails(response);
+            saveToDisk();
+            setLoading(false);
+        })
+        .catch(err => {
+            console.log('ERROR', err.message);
+            alert(err.message);
+            goBack();
+        });
 
         // w.getcardkeys().then(response => {
         //   setCardKeys(response);
@@ -112,15 +115,15 @@ const BoltCardDetails = () => {
         setTxMax(details.tx_limit_sats);
       }
       if(details && details.pin_enable) {
-        setPinEnabled(details.pin_enable == "Y" ? true : false);
+        setUsePin(details.pin_enable == 'Y' ? true : false);
       }
-      if(details && details.pin_limit_sats) {
-        setPinLimitSats(details.pin_limit_sats);
-      }
+      // if(details && details.pin_limit_sats) {
+      //   setPinLimitSats(details.pin_limit_sats);
+      // }
     }, [details]);
 
     const updateCard = () => {
-      wallet.updateCard(txMax, pinEnabled, pinEnabled ? pinLimitSats : details.pin_limit_sats).then(response => {
+      wallet.updateCard(txMax, usePin, pinNumber).then(response => {
         console.log('UPDATE CARD RESPONSE ', response);
         fetchCardDetails(wallet, true);
         setEditMode(false);
@@ -146,7 +149,28 @@ const BoltCardDetails = () => {
       });
     }
     
-    
+    const saveCardPinNumber = () => {
+      wallet.savePinNumber(pinNumber).then(response => {
+        console.log('saveCardPinNumber RESPONSE ', response);
+        fetchCardDetails(wallet, true);
+      }).catch(err => {
+        console.log('ERROR', err.message);
+        alert(err.message);
+      });
+    }
+
+    const togglePin = (enabled) => {
+      setUsePin(enabled);
+      wallet.togglePin(enabled).then(response => {
+        console.log('togglePin RESPONSE ', response);
+        fetchCardDetails(wallet, true);
+      }).catch(err => {
+        console.log('ERROR', err.message);
+        alert(err.message);
+      });
+
+      setUsePin(false);
+    }
 
     return(
         <View style={[styles.root, stylesHook.root]}>
@@ -156,73 +180,31 @@ const BoltCardDetails = () => {
                     {loading ?
                         <BlueText>Loading....</BlueText> 
                     :
-                        <>  
-                            <View style={{marginBottom: 15}}>
-                                {details && details.uid &&
-                                  <>
-                                      <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
-                                      <BlueText>{details.uid}</BlueText>
-                                  </>
-                                }
-                                {details && details.tx_limit_sats &&
-                                    <>
-                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
-                                        {editMode
-                                          ?
-                                          <BlueFormTextInput 
-                                            keyboardType = 'numeric' 
-                                            value={txMax.toString()} 
-                                            onChangeText={(value) => {
-                                              var newVal = value.replace(/[^0-9]/, '');
-                                              setTxMax(newVal);
-                                            }}
-                                          />
-                                          :
-                                          <BlueText style={{fontSize:30}}>{details.tx_limit_sats} sats</BlueText>
-                                        }
-                                    </>
-                                }
-                                {details && details.pin_enable &&
-                                    <>
-                                        {editMode
-                                          ?
-                                          <CheckBox
-                                              checkedColor="#0070FF" 
-                                              checked={pinEnabled} 
-                                              onPress={() => {setPinEnabled(!pinEnabled)}}
-                                              title="Enable PIN" 
-                                              containerStyle={{marginLeft: 0, marginRight: 0}}
-                                          />
-                                          :
-                                          <>
-                                            <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Pin Enabled</Text>
-                                            <BlueText style={{fontSize:30}}>{details.pin_enable == 'Y' ? 'YES' : 'NO'}</BlueText>
-                                          </>
-                                        }
-                                    </>
-                                }
-                                {details && pinEnabled && details.pin_limit_sats &&
-                                    <>
-                                        <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Pin Limit Sats</Text>
-                                        {editMode
-                                          ?
-                                          <BlueFormTextInput 
-                                            keyboardType = 'numeric' 
-                                            value={pinLimitSats.toString()} 
-                                            onChangeText={(value) => {
-                                              var newVal = value.replace(/[^0-9]/, '');
-                                              setPinLimitSats(newVal);
-                                            }}
-                                          />
-                                          :
-                                          <>
-                                            <BlueText style={{fontSize:30}}>{details.pin_limit_sats} sats</BlueText>
-                                          </>
-                                        }
-                                    </>
-                                }
-
-                            </View>
+                        <>
+                            {details && details.uid &&
+                              <>
+                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card UID</Text>
+                                  <BlueText>{details.uid}</BlueText>
+                              </>
+                            }
+                            {details && details.tx_limit_sats &&
+                                <>
+                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Transaction limit</Text>
+                                    {editMode
+                                      ?
+                                      <BlueFormTextInput 
+                                        keyboardType = 'numeric' 
+                                        value={txMax.toString()} 
+                                        onChangeText={(value) => {
+                                          var newVal = value.replace(/[^0-9]/, '');
+                                          setTxMax(newVal);
+                                        }}
+                                      />
+                                      :
+                                      <BlueText>{details.tx_limit_sats} sats</BlueText>
+                                    }
+                                </>
+                            }
                             {
                               wallet.getWipeData()
                               ?
@@ -258,34 +240,53 @@ const BoltCardDetails = () => {
 
                             }
                             {!editMode && details && details.lnurlw_enable &&
+                              <>
+                              <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
+                              <View style={{marginTop: 10}}>
+                                <BlueListItem
+                                  hideChevron
+                                  title="Enable Card PIN"
+                                  Component={TouchableWithoutFeedback}
+                                  switch={{ onValueChange: togglePin, value: usePin }}
+                                />
+                                {usePin && <>
+                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
+                                  <BlueFormTextInput 
+                                    keyboardType = 'numeric' 
+                                    value={pinNumber} 
+                                    onChangeText={setPinNumber}
+                                  />
+                                  <BlueButton
+                                    title="Save Pin"
+                                    onPress={() => saveCardPinNumber()}
+                                  />
+                                </>}
+                              </View>
+                              </>
+                            }
+                            {!editMode && details && details.lnurlw_enable &&
                                 <>
                                     <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Enable / Disable</Text>
-                                    
                                     { !wallet.getWipeData()
                                       && 
-                                      <>
-                                        {!editMode &&
-                                          <View style={{marginTop: 10}}>
-                                            {details.lnurlw_enable == 'Y' ? 
-                                              <BlueButton
-                                                title="Temporarily Disable Card"
-                                                onPress={() => {
-                                                  enableCard('false')
-                                                }}
-                                                backgroundColor={colors.redBG}
-                                              />
-                                            : 
-                                              <BlueButton
-                                                title="Enable Card"
-                                                onPress={() => {
-                                                  enableCard('true')
-                                                }}
-                                              />
-                                            }
-                                          </View>
+                                      <View style={{marginTop: 10}}>
+                                        {details.lnurlw_enable == 'Y' ? 
+                                          <BlueButton
+                                            title="Temporarily Disable Card"
+                                            onPress={() => {
+                                              enableCard('false')
+                                            }}
+                                            backgroundColor={colors.redBG}
+                                          />
+                                        : 
+                                          <BlueButton
+                                            title="Enable Card"
+                                            onPress={() => {
+                                              enableCard('true')
+                                            }}
+                                          />
                                         }
-                                      </>
-
+                                      </View>
                                     }
                                 </>
                             }

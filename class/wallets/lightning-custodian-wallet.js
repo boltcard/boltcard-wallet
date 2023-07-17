@@ -76,6 +76,21 @@ export class LightningCustodianWallet extends LegacyWallet {
     return login;
   }
 
+  buildCardName() {
+    let login, password;
+    if (this.secret.indexOf('blitzhub://') !== -1) {
+      login = this.secret.replace('blitzhub://', '').split(':')[0];
+      password = this.secret.replace('blitzhub://', '').split(':')[1];
+    } else if(this.secret.indexOf('lndhub://') !== -1) {
+      login = this.secret.replace('lndhub://', '').split(':')[0];
+      password = this.secret.replace('lndhub://', '').split(':')[1];
+    } else {
+      login = this.secret.replace('boltcardhub://', '').split(':')[0];
+      password = this.secret.replace('boltcardhub://', '').split(':')[1];
+    }
+    return login+':'+password;
+  } 
+
   timeToRefreshBalance() {
     return (+new Date() - this._lastBalanceFetch) / 1000 > 300; // 5 min
   }
@@ -706,18 +721,6 @@ export class LightningCustodianWallet extends LegacyWallet {
       return this.createcardurl;
     }
 
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
-
     const response = await this._api.post('/createboltcard', {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -725,7 +728,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         Authorization: 'Bearer' + ' ' + this.access_token,
       },
       body: {
-        card_name: login+':'+password
+        card_name: buildCardName()
       }
     });
 
@@ -751,19 +754,6 @@ export class LightningCustodianWallet extends LegacyWallet {
       return this.cardKeys;
     }
 
-
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
-
     const response = await this._api.post('/getcardkeys', {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -771,7 +761,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         Authorization: 'Bearer' + ' ' + this.access_token,
       },
       body: {
-        card_name: login+':'+password
+        card_name: this.buildCardName()
       }
     });
 
@@ -801,18 +791,6 @@ export class LightningCustodianWallet extends LegacyWallet {
       return this.wipeData;
     }
 
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
-
     const response = await this._api.post('/wipecard', {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -820,7 +798,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         Authorization: 'Bearer' + ' ' + this.access_token,
       },
       body: {
-        card_name: login+':'+password
+        card_name: this.buildCardName()
       }
     });
 
@@ -865,18 +843,6 @@ export class LightningCustodianWallet extends LegacyWallet {
 
     if(!this.cardDetails) await this.getCardDetails();
 
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
-
     console.log('enable bool', status);
     const response = await this._api.post('/updatecard', {
       headers: {
@@ -886,7 +852,7 @@ export class LightningCustodianWallet extends LegacyWallet {
       },
       body: {
         enable: status,
-        card_name: login+':'+password,
+        card_name: this.buildCardName(),
         tx_max: this.cardDetails.tx_limit_sats,
         day_max: this.cardDetails.day_limit_sats,
         enable_pin: this.cardDetails.enable_pin ? 'true' : 'false'
@@ -906,22 +872,10 @@ export class LightningCustodianWallet extends LegacyWallet {
     return this.cardEnabled = status;
   }
 
-  async updateCard(tx_max, pin_enable = 'false', pin_limit_sats = 0) {
+  async updateCard(tx_max, usePin, pinNumber) {
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
-
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
 
     let cardEnabled = 'false';
     if(this.cardDetails.lnurlw_enable == 'Y') {
@@ -936,8 +890,9 @@ export class LightningCustodianWallet extends LegacyWallet {
       },
       body: {
         enable: cardEnabled,
-        card_name: login+':'+password,
+        card_name: this.buildCardName(),
         tx_max: tx_max,
+        card_pin_number: pinNumber,
         //dont update the day_limit_says
         day_max: this.cardDetails.day_limit_sats,
         enable_pin: pin_enable,
@@ -965,18 +920,6 @@ export class LightningCustodianWallet extends LegacyWallet {
       return this.cardDetails;
     }
 
-    let login, password;
-    if (this.secret.indexOf('blitzhub://') !== -1) {
-      login = this.secret.replace('blitzhub://', '').split(':')[0];
-      password = this.secret.replace('blitzhub://', '').split(':')[1];
-    } else if(this.secret.indexOf('lndhub://') !== -1) {
-      login = this.secret.replace('lndhub://', '').split(':')[0];
-      password = this.secret.replace('lndhub://', '').split(':')[1];
-    } else {
-      login = this.secret.replace('boltcardhub://', '').split(':')[0];
-      password = this.secret.replace('boltcardhub://', '').split(':')[1];
-    }
-
     const response = await this._api.post('/getcard', {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -984,7 +927,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         Authorization: 'Bearer' + ' ' + this.access_token,
       },
       body: {
-        card_name: login+':'+password
+        card_name: this.buildCardName()
       }
     });
 
@@ -1022,6 +965,96 @@ export class LightningCustodianWallet extends LegacyWallet {
     return (this.cardDetails = json);
   }
 
+  async togglePin(enable) {
+    await this.checkLogin();
+
+    if(!this.cardDetails) await this.getCardDetails();
+
+    let cardEnabled = 'false';
+    if(this.cardDetails.lnurlw_enable == 'Y') {
+      cardEnabled = 'true';
+    }
+
+
+    const response = await this._api.post('/updatecard', {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer' + ' ' + this.access_token,
+      },
+      body: {
+        enable: cardEnabled,
+        card_name: this.buildCardName(),
+        tx_max: this.cardDetails.tx_limit_sats,
+        //dont update the day_limit_says
+        day_max: this.cardDetails.day_limit_sats,
+        enable_pin: enable,
+        pin_limit_sats: this.cardDetails.pin_limit_sats
+      }
+    });
+
+    const json = response.body;
+    
+    if (typeof json === 'undefined') {
+      throw new Error('API failure: ' + response.err + ' ' + JSON.stringify(response.body));
+    }
+    
+    if (json && json.error) {
+      throw new Error('API error: ' + json.message + ' (code ' + json.code + ')');
+    }
+    
+    console.log('togglePin response', [json]);
+    return json;
+  }
+
+  async savePinNumber(pinNumber) {
+    await this.checkLogin();
+
+    if(!this.cardDetails) await this.getCardDetails();
+
+    let cardEnabled = 'false';
+    if(this.cardDetails.lnurlw_enable == 'Y') {
+      cardEnabled = 'true';
+    }
+
+    let enablePin = 'false';
+    if(this.cardDetails.pin_enable == 'Y') {
+      enablePin = 'true';
+    }
+
+
+    const response = await this._api.post('/updatecard', {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer' + ' ' + this.access_token,
+      },
+      body: {
+        enable: cardEnabled,
+        card_name: this.buildCardName(),
+        tx_max: this.cardDetails.tx_limit_sats,
+        //dont update the day_limit_says
+        day_max: this.cardDetails.day_limit_sats,
+        enable_pin: enablePin,
+        pin_limit_sats: this.cardDetails.pin_limit_sats,
+        card_pin_number: pinNumber
+      }
+    });
+
+    const json = response.body;
+    
+    if (typeof json === 'undefined') {
+      throw new Error('API failure: ' + response.err + ' ' + JSON.stringify(response.body));
+    }
+    
+    if (json && json.error) {
+      throw new Error('API error: ' + json.message + ' (code ' + json.code + ')');
+    }
+    
+    console.log('togglePin response', [json]);
+    return json;
+  }
+
   async regenerateCardUrl() {
     await this.checkLogin();
 
@@ -1038,52 +1071,10 @@ export class LightningCustodianWallet extends LegacyWallet {
   }
 
   async pushNotificationToken() {
-    // if(this.notificationTokenPushed) {
-    //   //token has already been pushed for this wallet
-    //   return false;
-    // }
 
     return Notifications.majorTomToGroundControl([], [], [], [this.getLogin()]);
-    // return (this.notificationTokenPushed = true);
-    // return true;
+   
   }
 
   
 }
-
-/*
-
-
-
-pending tx:
-
-    [ { amount: 0.00078061,
-        account: '521172',
-        address: '3F9seBGCJZQ4WJJHwGhrxeGXCGbrm5SNpF',
-        category: 'receive',
-        confirmations: 0,
-        blockhash: '',
-        blockindex: 0,
-        blocktime: 0,
-        txid: '28a74277e47c2d772ee8a40464209c90dce084f3b5de38a2f41b14c79e3bfc62',
-        walletconflicts: [],
-        time: 1535024434,
-        timereceived: 1535024434 } ]
-
-
-tx:
-
-    [ { amount: 0.00078061,
-        account: '521172',
-        address: '3F9seBGCJZQ4WJJHwGhrxeGXCGbrm5SNpF',
-        category: 'receive',
-        confirmations: 5,
-        blockhash: '0000000000000000000edf18e9ece18e449c6d8eed1f729946b3531c32ee9f57',
-        blockindex: 693,
-        blocktime: 1535024914,
-        txid: '28a74277e47c2d772ee8a40464209c90dce084f3b5de38a2f41b14c79e3bfc62',
-        walletconflicts: [],
-        time: 1535024434,
-        timereceived: 1535024434 } ]
-
- */
