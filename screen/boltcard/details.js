@@ -128,6 +128,10 @@ const BoltCardDetails = () => {
         console.log('UPDATE CARD RESPONSE ', response);
         fetchCardDetails(wallet, true);
         setEditMode(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Card updated'
+        });
       }).catch(err => {
         console.log('ERROR', err.message);
         alert(err.message);
@@ -278,30 +282,31 @@ const BoltCardDetails = () => {
                             }
                             {!editMode && details && details.lnurlw_enable &&
                               <>
-                              <View style={{marginTop: 10}}>
-                                <BlueListItem
-                                  hideChevron
-                                  title="Enable Card PIN"
-                                  Component={TouchableWithoutFeedback}
-                                  switch={{ onValueChange: togglePin, value: usePin }}
-                                />
-                                {usePin && <>
-                                  <View style={{marginBottom: 15}}>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
-                                    <BlueFormTextInput 
-                                      keyboardType = 'numeric' 
-                                      value={pinNumber} 
-                                      onChangeText={(value) => {
-                                        onNumberFieldChange(value, setPinNumber);
-                                      }}
-                                    />
-                                  </View>
-                                  <BlueButton
-                                    title="Save Pin"
-                                    onPress={saveCardPinNumber}
+                                <View style={{marginTop: 10}}>
+                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>PIN</Text>
+                                  <BlueListItem
+                                    hideChevron
+                                    title="Enable Card PIN"
+                                    Component={TouchableWithoutFeedback}
+                                    switch={{ onValueChange: togglePin, value: usePin }}
                                   />
-                                </>}
-                              </View>
+                                  {usePin && <>
+                                    <View style={{marginBottom: 15}}>
+                                      <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
+                                      <BlueFormTextInput 
+                                        keyboardType = 'numeric' 
+                                        value={pinNumber} 
+                                        onChangeText={(value) => {
+                                          onNumberFieldChange(value, setPinNumber);
+                                        }}
+                                      />
+                                    </View>
+                                    <BlueButton
+                                      title="Save Pin"
+                                      onPress={saveCardPinNumber}
+                                    />
+                                  </>}
+                                </View>
                               </>
                             }
                             {!editMode && details && details.lnurlw_enable &&
