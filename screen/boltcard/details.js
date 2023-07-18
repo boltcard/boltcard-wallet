@@ -22,6 +22,7 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
 import { ListItem } from 'react-native-elements';
+import Toast from 'react-native-toast-message';
 
 
 
@@ -150,9 +151,21 @@ const BoltCardDetails = () => {
     }
     
     const saveCardPinNumber = () => {
+      if(!((/^\d+$/.test(pinNumber) && pinNumber.length == 4))) {
+        Toast.show({
+          type: 'error',
+          text1: 'PIN must be 4 digit number'
+        });
+        return;
+      }
       wallet.savePinNumber(pinNumber).then(response => {
         console.log('saveCardPinNumber RESPONSE ', response);
         fetchCardDetails(wallet, true);
+        Toast.show({
+          type: 'success',
+          text1: 'PIN changed'
+        });
+        setPinNumber(null);
       }).catch(err => {
         console.log('ERROR', err.message);
         alert(err.message);
@@ -170,6 +183,11 @@ const BoltCardDetails = () => {
       });
 
       setUsePin(false);
+    }
+
+    const onNumberFieldChange = (val, setValue) => {
+      var newVal = val.replace(/[^0-9]/, '');
+      setValue(newVal);
     }
 
     return(
@@ -197,8 +215,7 @@ const BoltCardDetails = () => {
                                             keyboardType = 'numeric' 
                                             value={txMax.toString()} 
                                             onChangeText={(value) => {
-                                              var newVal = value.replace(/[^0-9]/, '');
-                                              setTxMax(newVal);
+                                              onNumberFieldChange(value, setTxMax);
                                             }}
                                           />
                                           :
@@ -215,8 +232,7 @@ const BoltCardDetails = () => {
                                             keyboardType = 'numeric' 
                                             value={pinLimitSats.toString()} 
                                             onChangeText={(value) => {
-                                              var newVal = value.replace(/[^0-9]/, '');
-                                              setPinLimitSats(newVal);
+                                              onNumberFieldChange(value, setPinLimitSats);
                                             }}
                                           />
                                           :
@@ -262,7 +278,6 @@ const BoltCardDetails = () => {
                             }
                             {!editMode && details && details.lnurlw_enable &&
                               <>
-                              <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
                               <View style={{marginTop: 10}}>
                                 <BlueListItem
                                   hideChevron
@@ -271,15 +286,19 @@ const BoltCardDetails = () => {
                                   switch={{ onValueChange: togglePin, value: usePin }}
                                 />
                                 {usePin && <>
-                                  <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
-                                  <BlueFormTextInput 
-                                    keyboardType = 'numeric' 
-                                    value={pinNumber} 
-                                    onChangeText={setPinNumber}
-                                  />
+                                  <View style={{marginBottom: 15}}>
+                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Set card pin number</Text>
+                                    <BlueFormTextInput 
+                                      keyboardType = 'numeric' 
+                                      value={pinNumber} 
+                                      onChangeText={(value) => {
+                                        onNumberFieldChange(value, setPinNumber);
+                                      }}
+                                    />
+                                  </View>
                                   <BlueButton
                                     title="Save Pin"
-                                    onPress={() => saveCardPinNumber()}
+                                    onPress={saveCardPinNumber}
                                   />
                                 </>}
                               </View>

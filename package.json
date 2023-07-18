@@ -185,6 +185,7 @@
     "react-native-share": "8.2.1",
     "react-native-svg": "13.8.0",
     "react-native-tcp-socket": "5.6.2",
+    "react-native-toast-message": "^2.1.6",
     "react-native-tor": "0.1.8",
     "react-native-vector-icons": "9.2.0",
     "react-native-watch-connectivity": "1.1.0",
