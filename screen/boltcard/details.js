@@ -189,8 +189,11 @@ const BoltCardDetails = () => {
       setUsePin(false);
     }
 
-    const onNumberFieldChange = (val, setValue) => {
+    const onNumberFieldChange = (val, setValue, maxLength = null) => {
       var newVal = val.replace(/[^0-9]/, '');
+      if(maxLength) {
+        newVal = newVal.slice(0, maxLength);
+      }
       setValue(newVal);
     }
 
@@ -297,7 +300,7 @@ const BoltCardDetails = () => {
                                         keyboardType = 'numeric' 
                                         value={pinNumber} 
                                         onChangeText={(value) => {
-                                          onNumberFieldChange(value, setPinNumber);
+                                          onNumberFieldChange(value, setPinNumber, 4);
                                         }}
                                       />
                                     </View>
