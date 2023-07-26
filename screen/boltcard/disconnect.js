@@ -437,18 +437,7 @@ BoltCardDisconnect.navigationOptions = navigationStyle(
 (options, { theme, navigation, route }) => (
     {
          ...options, 
-         title: "Disconnect bolt card", 
-        //  headerLeft: () => Platform.OS == 'ios' ? (
-        //     <TouchableOpacity
-        //     accessibilityRole="button"
-        //     disabled={route.params.isLoading === true}
-        //     onPress={() =>
-        //         navigation.navigate('BoltCardDisconnectHelp')
-        //     }
-        //     >
-        //         <Icon name="help-outline" type="material" size={22} color="#000" />
-        //     </TouchableOpacity>
-        // ) : null
+         title: "Disconnect bolt card"
     }
 ),
 );

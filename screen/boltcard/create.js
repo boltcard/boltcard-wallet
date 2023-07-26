@@ -629,18 +629,7 @@ BoltCardCreate.navigationOptions = navigationStyle(
 (options, { theme, navigation, route }) => (
     {
          ...options, 
-         title: "Connect bolt card", 
-        //  headerLeft: () => Platform.OS == 'ios' ? (
-        //     <TouchableOpacity
-        //     accessibilityRole="button"
-        //     disabled={route.params.isLoading === true}
-        //     onPress={() =>
-        //         navigation.navigate('BoltCardCreateHelp')
-        //     }
-        //     >
-        //         <Icon name="help-outline" type="material" size={22} color="#000" />
-        //     </TouchableOpacity>
-        // ) : null
+         title: "Connect bolt card"
     }),
 );
 
