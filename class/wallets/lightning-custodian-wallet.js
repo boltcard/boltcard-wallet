@@ -844,7 +844,7 @@ export class LightningCustodianWallet extends LegacyWallet {
     if(!this.cardDetails) await this.getCardDetails();
 
     console.log('enable bool', status);
-    const response = await this._api.post('/updatecard', {
+    var response = await this._api.post('/updatecardwithpin', {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
@@ -859,7 +859,24 @@ export class LightningCustodianWallet extends LegacyWallet {
       }
     });
 
+    if(response.status == "404") {
+      response = await this._api.post('/updatecard', {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer' + ' ' + this.access_token,
+        },
+        body: {
+          enable: status,
+          card_name: this.buildCardName(),
+          tx_max: this.cardDetails.tx_limit_sats,
+          day_max: this.cardDetails.day_limit_sats
+        }
+      });
+    }
+
     const json = response.body;
+
     if (typeof json === 'undefined') {
       throw new Error('API failure: ' + response.err + ' ' + JSON.stringify(response.body));
     }
@@ -887,7 +904,7 @@ export class LightningCustodianWallet extends LegacyWallet {
       enablePin = 'true';
     }
 
-    const response = await this._api.post('/updatecard', {
+    var response = await this._api.post('/updatecardwithpin', {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
@@ -903,6 +920,23 @@ export class LightningCustodianWallet extends LegacyWallet {
         pin_limit_sats: pinLimitSats
       }
     });
+
+    if(response.status == "404") {
+      response = await this._api.post('/updatecard', {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer' + ' ' + this.access_token,
+        },
+        body: {
+          enable: cardEnabled,
+          card_name: this.buildCardName(),
+          tx_max: tx_max,
+          //dont update the day_limit_says
+          day_max: this.cardDetails.day_limit_sats
+        }
+      });
+    }
 
     const json = response.body;
     if (typeof json === 'undefined') {
@@ -980,7 +1014,7 @@ export class LightningCustodianWallet extends LegacyWallet {
     }
 
 
-    const response = await this._api.post('/updatecard', {
+    const response = await this._api.post('/updatecardwithpin', {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
@@ -997,6 +1031,9 @@ export class LightningCustodianWallet extends LegacyWallet {
       }
     });
 
+    if(response.status == "404") {
+      throw new Error('API failure: You cannot enable PIN. Please update your hub');
+    }
     const json = response.body;
     
     if (typeof json === 'undefined') {
@@ -1027,7 +1064,7 @@ export class LightningCustodianWallet extends LegacyWallet {
     }
 
 
-    const response = await this._api.post('/updatecard', {
+    const response = await this._api.post('/updatecardwithpin', {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
@@ -1044,6 +1081,10 @@ export class LightningCustodianWallet extends LegacyWallet {
         card_pin_number: pinNumber
       }
     });
+
+    if(response.status == "404") {
+      throw new Error('API failure: You cannot update PIN. Please update your hub');
+    }
 
     const json = response.body;
     
