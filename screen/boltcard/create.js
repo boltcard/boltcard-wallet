@@ -385,6 +385,7 @@ const BoltCardCreate = () => {
                                       <View style={{marginVertical: 20}}>
                                           <BlueLoading style={{marginBottom: 15}}/>
                                           <BlueText>Programming your bolt card...</BlueText>
+                                          <BlueText>Do not remove your card until writing is complete.</BlueText>
                                       </View>
                                     :
                                       <>

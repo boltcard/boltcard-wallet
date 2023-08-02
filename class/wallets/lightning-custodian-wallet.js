@@ -721,7 +721,7 @@ export class LightningCustodianWallet extends LegacyWallet {
       return this.createcardurl;
     }
 
-    const response = await this._api.post('/createboltcard', {
+    var response = await this._api.post('/createboltcardwithcard', {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
@@ -731,6 +731,19 @@ export class LightningCustodianWallet extends LegacyWallet {
         card_name: buildCardName()
       }
     });
+
+    if(response.status == "404") {
+      response = await this._api.post('/createboltcard', {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer' + ' ' + this.access_token,
+        },
+        body: {
+          card_name: buildCardName()
+        }
+      });
+    }
 
     const json = response.body;
     if (typeof json === 'undefined') {
