@@ -284,6 +284,33 @@ const BoltCardDetails = () => {
 
                             }
                             {!editMode && details && details.lnurlw_enable &&
+                                <>
+                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Enable / Disable</Text>
+                                    { !wallet.getWipeData()
+                                      && 
+                                      <View style={{marginTop: 10}}>
+                                        {details.lnurlw_enable == 'Y' ? 
+                                          <BlueButton
+                                            title="Temporarily Disable Card"
+                                            onPress={() => {
+                                              enableCard('false')
+                                            }}
+                                            backgroundColor={colors.redBG}
+                                          />
+                                        : 
+                                          <BlueButton
+                                            title="Enable Card"
+                                            onPress={() => {
+                                              enableCard('true')
+                                            }}
+                                          />
+                                        }
+                                      </View>
+                                    }
+                                </>
+                            }
+                            
+                            {!editMode && details && details.lnurlw_enable &&
                               <>
                                 <View style={{marginTop: 10}}>
                                   <Text style={[styles.textLabel1, stylesHook.textLabel1]}>PIN</Text>
@@ -312,32 +339,7 @@ const BoltCardDetails = () => {
                                 </View>
                               </>
                             }
-                            {!editMode && details && details.lnurlw_enable &&
-                                <>
-                                    <Text style={[styles.textLabel1, stylesHook.textLabel1]}>Card Enable / Disable</Text>
-                                    { !wallet.getWipeData()
-                                      && 
-                                      <View style={{marginTop: 10}}>
-                                        {details.lnurlw_enable == 'Y' ? 
-                                          <BlueButton
-                                            title="Temporarily Disable Card"
-                                            onPress={() => {
-                                              enableCard('false')
-                                            }}
-                                            backgroundColor={colors.redBG}
-                                          />
-                                        : 
-                                          <BlueButton
-                                            title="Enable Card"
-                                            onPress={() => {
-                                              enableCard('true')
-                                            }}
-                                          />
-                                        }
-                                      </View>
-                                    }
-                                </>
-                            }
+                            
                             
                             {!editMode &&
                               <View style={{alignItems: 'center', marginTop: 30}}>
