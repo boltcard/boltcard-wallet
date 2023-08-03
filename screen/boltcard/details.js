@@ -9,7 +9,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView
 } from 'react-native';
 
 import {
@@ -201,6 +202,9 @@ const BoltCardDetails = () => {
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
                 <View style={styles.scrollBody}>
                     {loading ?
                         <BlueText>Loading....</BlueText> 
@@ -366,6 +370,8 @@ const BoltCardDetails = () => {
                         </>
                     }
                 </View>
+              </KeyboardAvoidingView>
+                
             </ScrollView>
             
         </View>
