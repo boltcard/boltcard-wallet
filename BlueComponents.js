@@ -478,7 +478,7 @@ export const BlueFormTextInput = props => {
       underlineColorAndroid="transparent"
       style={{
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: Platform.OS == 'ios' ? 8 : 3,
         marginTop: 5,
         marginHorizontal: 0,
         borderColor: colors.formBorder,
