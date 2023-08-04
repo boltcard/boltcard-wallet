@@ -1,5 +1,5 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import {
     ActivityIndicator,
     BackHandler,
@@ -16,6 +16,8 @@ import {
 import {Icon, ListItem, CheckBox} from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
+import LottieView from 'lottie-react-native';
+import Dialog from 'react-native-dialog';
 import Ntag424 from '../../class/Ntag424';
 
 import {
@@ -29,7 +31,7 @@ import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
 var RNFS = require('react-native-fs');
 
-const BoltCardCreate = () => {
+const BoltCardCreate = ({navigation}) => {
 
     const { walletID } = useRoute().params;
     const { wallets, saveToDisk } = useContext(BlueStorageContext);
@@ -100,6 +102,20 @@ const BoltCardCreate = () => {
 
     const [enhancedPrivacy, setEnhancedPrivacy] = useState(false);
 
+    const animationRef = useCallback((ref) => {
+        if(ref) {
+            ref.play();
+            // Or set a specific startFrame and endFrame with:
+            ref.play(30, 120);
+        }
+    }, []);
+
+    useEffect(() => {
+        navigation.addListener('beforeRemove', (e) => {
+            NfcManager.cancelTechnologyRequest();
+        })
+    }, [navigation])
+
     useEffect(() => {
         if(cardDetails && (cardDetails.lnurlw_base && cardDetails.k0 && cardDetails.k1 && cardDetails.k2 && cardDetails.k3 && cardDetails.k4)) {
             setKeys([cardDetails.k0,cardDetails.k1,cardDetails.k2,cardDetails.k3,cardDetails.k4])
@@ -107,11 +123,18 @@ const BoltCardCreate = () => {
             setCardName(cardDetails.card_name)
             resetOutput();
 
-            backupCardKeys();
+            // backupCardKeys();
         }
     }, [cardDetails]);
 
+    useEffect(() => {
+        if(keys && lnurlw_base) {
+            writeAgain();
+        }
+    }, [keys, lnurlw_base]);
+
     const getCardKeys = (wallet) => {
+        setLoading(true)
         wallet
             .getcardkeys()
             .then(keys => {
@@ -119,9 +142,12 @@ const BoltCardCreate = () => {
                 setCardDetails(keys);
                 wallet.setWipeData(null);
                 saveToDisk();
-                setLoading(false);
+                setTimeout(() => {
+                    setLoading(false);
+                }, 1000);
             })
             .catch(err => {
+                setLoading(false);
                 console.log('ERROR', err.message);
                 alert(err.message);
                 goBack();
@@ -169,12 +195,13 @@ const BoltCardCreate = () => {
     const writeAgain = async () => {
         resetOutput();
         setWriteMode(true);
-        setWritingCard(true);
+        console.log('writeAgain');
         try {
             // register for the NFC tag with NDEF in it
             await NfcManager.requestTechnology(NfcTech.IsoDep, {
               alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed."
             });
+            setWritingCard(true);
       
             //set ndef
             const ndefMessage = lnurlw_base.includes('?')
@@ -306,6 +333,9 @@ const BoltCardCreate = () => {
                 error = "NFC Error: "+(ex.message? ex.message : ex.constructor.name);
             }
             setTagTypeError(error);
+            setWritingCard(false);
+            await delay(1500);
+            setWriteMode(false);
         } finally {
             // stop the nfc scanning
             await NfcManager.cancelTechnologyRequest();
@@ -365,187 +395,212 @@ const BoltCardCreate = () => {
     const key3display = keys[3] ? keys[3].substring(0, 4)+"............"+ keys[3].substring(28) : "pending...";
     const key4display = keys[4] ? keys[4].substring(0, 4)+"............"+ keys[4].substring(28) : "pending...";
 
+    const writingCardContent = () => {
+        if(writingCard) {
+            //card is getting written
+            return (
+                <View style={{marginVertical: 20}}>
+                    <ActivityIndicator style={{marginBottom: 15}}/>
+                    <BlueText style={{fontSize: 20, textAlign: 'center', marginBottom: 10}}>Programming your bolt card...</BlueText>
+                    <BlueText style={{fontSize: 20, textAlign: 'center'}}>Do not remove your card until writing is complete.</BlueText>
+                </View>
+            );
+        }  else {
+            if(tagTypeError || cardUID) {
+                // result of card being written
+                return (
+                    <>  
+                        <>
+                            {testc && testc == "ok" ?
+                                <>
+                                    <Icon name="check" color="#0f5cc0" size={80} />
+                                    <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                        Card Connected
+                                    </BlueText>
+                                </>
+                            :
+                                <>
+
+                                    <Icon name="warning" color="#0f5cc0" size={80} />
+                                    <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                        Card Write Failed
+                                    </BlueText>
+                                </>
+                            }
+                            <BlueButton 
+                                style={styles.link}
+                                title={!showDetails ? "Show Write Details ▼" : "Hide Write Details ▴"}
+                                onPress={() => setShowDetails(!showDetails)}
+                            />
+                            {showDetails && 
+                                <View style={{paddingBottom: 20}}>
+                                    <Text>Output:</Text>
+                                    {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
+                                    {cardUID && <Text>Card UID: {cardUID} {showTickOrError(true)}</Text>}
+                                    {tagname && <Text style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</Text>}
+                                    {key0Changed && <Text>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</Text>}                       
+                                    {ndefWritten && <Text>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</Text>}
+                                    {writekeys && <Text>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</Text>}
+                                    {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
+                                    {testp && <Text>Test PICC: {
+                                        cardUID.length == 8 ? 
+                                        <>test skipped {showTickOrError(true)}</>
+                                        : 
+                                        <>{testp}{showTickOrError(testp == "ok")}</>
+                                    }</Text>}
+                                    {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
+                                    {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
+
+                                    
+                                </View>
+                            }
+                        </>
+                        <>
+                            {writekeys == "success" ? 
+                                <BlueButton 
+                                    title="Go back"
+                                    onPress={goBack}
+                                />
+                            :
+                                <BlueButton 
+                                    title="Retry"
+                                    onPress={writeAgain}
+                                />
+                            }
+                        </>
+                    </>
+
+                );
+            }
+        }
+        return null;
+    }
+
+    const writeCardContent = () => {
+        if(writingCard || tagTypeError || cardUID) {
+            //card is being written or need to show write card result
+            return (
+                <>
+                    {writingCardContent()}
+                </>
+            );
+        } else {
+            var content = () => null;
+            if(writeMode) {
+                //ready to write card
+                content = () => (
+                    <React.Fragment>
+                        <BlueText style={{...styles.label, fontSize: 25, lineHeight: 35, marginBottom: 10}}>Hold your nfc card{"\n"}to the reader.</BlueText>
+                        <View style={{justifyContent: 'center', flexDirection: 'row'}}>
+                            <Icon name="warning" color="orange" size={20} />
+                            <BlueText style={{...styles.label, fontSize:20, marginLeft: 10}}>
+                                Hold card steady.
+                            </BlueText>
+                        </View>
+                        <View style={{justifyContent: 'center', flexDirection: 'row'}}>
+                            <Icon name="warning" color="orange" size={20} />
+                            <BlueText style={{...styles.label, fontSize:20, marginLeft: 10}}>
+                                Do not remove your card until writing is complete. 
+                            </BlueText>
+                        </View>
+                        <View style={{alignItems: 'center'}}>
+                            <LottieView 
+                                source={require("../../img/nfc-tap-animation.json")} 
+                                autoplay={true} 
+                                loop={true} 
+                                style={{height: 200}}
+                                ref={animationRef}
+                            />
+                        </View>
+                    </React.Fragment>
+                );
+            } else {
+                //show write card button
+                content = () => (
+                    <React.Fragment>
+                        <View>
+                            <Text style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Connect your Boltcard</Text>
+                            <View style={{alignItems: 'center'}}>
+                                <Image 
+                                    source={require('../../img/bolt-card-link_black.png')}
+                                    style={{width: 130, height: 100, marginVertical:20}}
+                                    resizeMode={'cover'}
+                                />
+                            </View>
+                        </View>
+                        <View style={{marginBottom: 15}}>
+                            <BlueButton title="Write" onPress={writeAgain}/>
+                        </View>
+                        <BlueButton title="Download your keys" onPress={backupCardKeys}/>
+                    </React.Fragment>
+                );
+            }
+            return (
+                <React.Fragment>
+                    {content()}
+                    <BlueButton 
+                        style={styles.link}
+                        title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
+                        onPress={() => setShowDetails(!showDetails)}
+                    />
+                        {showDetails && <>
+                            <View style={{paddingHorizontal:5, marginVertical: 10}}>
+                                <CheckBox 
+                                    center 
+                                    checkedColor="#0070FF" 
+                                    checked={enhancedPrivacy} 
+                                    onPress={togglePrivacy} 
+                                    disabled={writeMode}
+                                    title="Enable Private UID (Hides card UID. One-way operation, can't undo)" 
+                                />
+                            </View>
+                          
+                            <View style={{marginBottom: 20}}>
+                                <BlueText style={styles.monospace}>lnurl:</BlueText>
+                                <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
+                                <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
+                                <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
+                                <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
+                                <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
+                                <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
+                                <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
+                            </View>
+                        </>
+                        } 
+                </React.Fragment>
+            );
+        }
+
+    }
+
     return(
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
                 <View style={styles.scrollBody}>
                     <BlueCard>
-                        {loading ? 
-                            <>
-                                <BlueLoading />
-                                <BlueText>Loading...</BlueText>
-                            </>
+                        {
+                            loading
+                        ?
+                            <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+                                <ActivityIndicator style={{marginBottom: 15}} size="large"/>
+                                <BlueText style={{marginBottom: 15, ...styles.h4}}>Getting card details...</BlueText>
+                            </View>
                         :
                             <>
-                                {cardUID ? 
-                                  <>
-                                  <View style={{fontSize: 30}}>
-                                    {writingCard ? 
-                                      <View style={{marginVertical: 20}}>
-                                          <BlueLoading style={{marginBottom: 15}}/>
-                                          <BlueText>Programming your bolt card...</BlueText>
-                                          <BlueText>Do not remove your card until writing is complete.</BlueText>
-                                      </View>
-                                    :
-                                      <>
-                                        {testc && testc == "ok" ?
-                                            <>
-                                                <Icon name="check" color="#0f5cc0" size={80} />
-                                                <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-                                                    Card Connected
-                                                </BlueText>
-                                            </>
-                                        :
-                                            <>
+                                {cardDetails ?
+                                    <View style={{flex: 1, justifyContent: 'center'}}>
+                                        <View>
+                                            {writeCardContent()}
+                                        </View>
+                                    </View>
 
-                                                <Icon name="warning" color="#0f5cc0" size={80} />
-                                                <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-                                                    Card Write Failed
-                                                </BlueText>
-                                            </>
-                                        }
-                                        <BlueButton 
-                                            style={styles.link}
-                                            title={!showDetails ? "Show Write Details ▼" : "Hide Write Details ▴"}
-                                            onPress={() => setShowDetails(!showDetails)}
-                                        />
-                                        {showDetails && 
-                                            <>
-                                                <Text>Output:</Text>
-                                                {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
-                                                {cardUID && <Text>Card UID: {cardUID} {showTickOrError(true)}</Text>}
-                                                {tagname && <Text style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</Text>}
-                                                {key0Changed && <Text>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</Text>}                       
-                                                {ndefWritten && <Text>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</Text>}
-                                                {writekeys && <Text>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</Text>}
-                                                {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
-                                                {testp && <Text>Test PICC: {
-                                                    cardUID.length == 8 ? 
-                                                    <>test skipped {showTickOrError(true)}</>
-                                                    : 
-                                                    <>{testp}{showTickOrError(testp == "ok")}</>
-                                                }</Text>}
-                                                {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
-                                                {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
-
-                                                
-                                            </>
-                                        }
-                                      </>
-                                    }
-                                  </View>
-                                  {writekeys == "success" ? 
-                                      <BlueButton 
-                                          title="Go back"
-                                          onPress={goBack}
-                                      />
-                                  :
-                                      <BlueButton 
-                                          title="Retry"
-                                          onPress={writeAgain}
-                                      />
-                                  }
-                                  </>
-                                : 
-                                  <>
-                                    {
-                                      cardDetails ? 
-                                      <>
-                                          <View style={{...styles.label,  textAlign:'center',
-                                          flexDirection: 'row',
-                                          justifyContent: 'space-around',
-                                          alignItems: 'center'}}>
-                                          <Image 
-                                              source={(() => {
-                                              return require('../../img/bolt-card-link.png');
-                                              })()} style={{width: 40, height: 30, marginTop:20}}
-                                          />
-                                          </View>
-                                          {writeMode
-                                            ?
-                                            <>
-                                              <BlueText style={styles.label}>Hold your nfc card to the reader.</BlueText>
-                                              <BlueText style={{...styles.label, fontSize:25}}>
-                                              <Icon name="warning" color="orange" size={30} /> Hold card steady.
-                                              </BlueText>
-                                              <BlueText style={{...styles.label, fontSize:25}}>
-                                              <Icon name="warning" color="orange" size={30} /> Do not remove your card until writing is complete. 
-                                              </BlueText>
-                                              <BlueText style={styles.label}><ActivityIndicator size="large" /></BlueText>
-                                            </>
-                                            :
-                                            <>
-                                                <BlueButton title="Write" onPress={writeAgain}/>
-                                            </>
-                                          }
-                                          
-                                          <BlueButton 
-                                              style={styles.link}
-                                              title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
-                                              onPress={() => setShowDetails(!showDetails)}
-                                          />
-                                          {showDetails && <>
-                                              <View style={{paddingHorizontal:5, marginVertical: 10}}>
-                                                   <CheckBox 
-                                                        center 
-                                                        checkedColor="#0070FF" 
-                                                        checked={enhancedPrivacy} 
-                                                        onPress={togglePrivacy} 
-                                                        disabled={writeMode}
-                                                        title="Enable Private UID (Hides card UID. One-way operation, can't undo)" 
-                                                    />
-                                              </View>
-                                              
-                                              <View style={{marginBottom: 20}}>
-                                                  <BlueText style={styles.monospace}>lnurl:</BlueText>
-                                                  <BlueText style={styles.monospace}>{lnurlw_base}</BlueText>
-                                                  <BlueText style={styles.monospace}>Private UID: {enhancedPrivacy ? "yes" : "no"}</BlueText>
-                                                  <BlueText style={styles.monospace}>Key 0: {key0display}</BlueText>
-                                                  <BlueText style={styles.monospace}>Key 1: {key1display}</BlueText>
-                                                  <BlueText style={styles.monospace}>Key 2: {key2display}</BlueText>
-                                                  <BlueText style={styles.monospace}>Key 3: {key3display}</BlueText>
-                                                  <BlueText style={styles.monospace}>Key 4: {key4display}</BlueText>
-                                              </View>
-                                          </>
-                                          } 
-                                          {__DEV__ && 
-                                              <>
-                                              <View style={{marginBottom: 10}}>
-                                                <BlueButton
-                                                    onPress={()=> {
-                                                        setCardWritten('success')
-                                                        NativeModules.MyReactModule.setCardMode('read');
-                                                        setWriteMode(false);  
-                                                        setWriteKeys("success");
-                                                        setCardUID('simulated write');
-                                                        setTestc('ok');
-                                                    }}
-                                                    title="Simulate write success"
-                                                />
-                                              </View>
-                                              <BlueButton
-                                                  onPress={()=> {
-                                                      NativeModules.MyReactModule.setCardMode('read');
-                                                      setWriteMode(false);  
-                                                      setWriteKeys("fail");
-                                                      setCardUID('simulated write');
-                                                      setTestc('fail');
-                                                  }}
-                                                  title="Simulate write failure" 
-                                              />
-                                              </>
-                                          }
-                                      </>
-
-                                      :
-                                      <Text>Error getting bolt card details.</Text>
-                                    }
-                                  </>
+                                :
+                                    <Text>Error getting bolt card details.</Text>
                                 }
-                            
                             </>
                         }
+                        
                     </BlueCard>
                 </View>
             </ScrollView>
@@ -620,6 +675,9 @@ const styles = StyleSheet.create({
         marginHorizontal: 8,
         minHeight: 33,
       },
+      h4: {
+        fontSize: 25
+      }
 });
 
 BoltCardCreate.navigationOptions = navigationStyle(
