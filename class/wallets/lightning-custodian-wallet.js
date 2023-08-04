@@ -852,6 +852,7 @@ export class LightningCustodianWallet extends LegacyWallet {
   }
 
   async enableCard(status) {
+    console.log('API enableCard', status);
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
@@ -868,7 +869,8 @@ export class LightningCustodianWallet extends LegacyWallet {
         card_name: this.buildCardName(),
         tx_max: this.cardDetails.tx_limit_sats,
         day_max: this.cardDetails.day_limit_sats,
-        enable_pin: this.cardDetails.enable_pin ? 'true' : 'false'
+        enable_pin: this.cardDetails.enable_pin ? 'true' : 'false',
+        pin_limit_sats: this.cardDetails.pin_limit_sats
       }
     });
 
@@ -902,7 +904,8 @@ export class LightningCustodianWallet extends LegacyWallet {
     return this.cardEnabled = status;
   }
 
-  async updateCard(tx_max, pinLimitSats) {
+  async updateCard(tx_max) {
+    console.log('API updateCard', tx_max);
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
@@ -930,7 +933,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         //dont update the day_limit_says
         day_max: this.cardDetails.day_limit_sats,
         enable_pin: enablePin,
-        pin_limit_sats: pinLimitSats
+        pin_limit_sats: this.cardDetails.pin_limit_sats
       }
     });
 
@@ -1017,6 +1020,7 @@ export class LightningCustodianWallet extends LegacyWallet {
   }
 
   async togglePin(enable) {
+    console.log('API togglePin', enable);
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
@@ -1061,7 +1065,8 @@ export class LightningCustodianWallet extends LegacyWallet {
     return json;
   }
 
-  async savePinNumber(pinNumber) {
+  async savePinNumber(pinNumber, pinLimitSats) {
+    console.log('API pinNumber', pinNumber, pinLimitSats);
     await this.checkLogin();
 
     if(!this.cardDetails) await this.getCardDetails();
@@ -1090,7 +1095,7 @@ export class LightningCustodianWallet extends LegacyWallet {
         //dont update the day_limit_says
         day_max: this.cardDetails.day_limit_sats,
         enable_pin: enablePin,
-        pin_limit_sats: this.cardDetails.pin_limit_sats,
+        pin_limit_sats: pinLimitSats,
         card_pin_number: pinNumber
       }
     });
