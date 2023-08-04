@@ -238,13 +238,15 @@ const BoltCardDetails = () => {
                                   :
                                   <View style={{marginTop: 5, flexDirection:"row"}}>
                                     <BlueText style={{lineHeight:30, fontSize:25}}>{details.tx_limit_sats} sats</BlueText>
-                                    <View style={{marginLeft: 20}}>
-                                      <Button
-                                        title="Edit"
-                                        style={{height:10}}
-                                        onPress={() => setEditMode(true)}
-                                      />
-                                    </View>
+                                    {!wallet.getWipeData() &&
+                                      <View style={{marginLeft: 20}}>
+                                        <Button
+                                          title="Edit"
+                                          style={{height:10}}
+                                          onPress={() => setEditMode(true)}
+                                        />
+                                      </View>
+                                    }
                                   </View>
                                 }
                               </>
@@ -296,7 +298,7 @@ const BoltCardDetails = () => {
                             }
                             
                             
-                            {!editMode && details && details.lnurlw_enable &&
+                            {!wallet.getWipeData() && !editMode && details && details.lnurlw_enable &&
                               <>
                                 <View style={{margin: 0, borderWidth:1, padding:10, borderColor:'#777'}}>
                                   <BlueListItem
