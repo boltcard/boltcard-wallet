@@ -12,7 +12,7 @@ import {
     Text,
     TextInput,
     View,
-    PlatformColor
+    Image
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
@@ -147,7 +147,7 @@ const BoltCardDisconnect = ({navigation}) => {
     }, [walletID]);
 
     useEffect(() => {
-        if(key0 && key1 && key2 && key3 && key4) {
+        if(key0 && key1 && key2 && key3 && key4 && Platform.OS == 'android') {
             enableResetMode()
         }
     }, [key0, key1, key2, key3, key4]);
@@ -358,7 +358,7 @@ const BoltCardDisconnect = ({navigation}) => {
                             <Text style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Reset your Boltcard</Text>
                             <View style={{alignItems: 'center'}}>
                                 <Image 
-                                    source={require('../../img/bolt-card-link_black.png')}
+                                    source={require('../../img/bolt-card-unlink_black.png')}
                                     style={{width: 130, height: 100, marginVertical:20}}
                                     resizeMode={'cover'}
                                 />

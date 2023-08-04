@@ -128,7 +128,7 @@ const BoltCardCreate = ({navigation}) => {
     }, [cardDetails]);
 
     useEffect(() => {
-        if(keys && lnurlw_base) {
+        if(keys && lnurlw_base && Platform.OS == 'android') {
             writeAgain();
         }
     }, [keys, lnurlw_base]);
