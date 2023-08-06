@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import LottieView from 'lottie-react-native';
 import Ntag424 from '../../class/Ntag424';
 import { Icon } from 'react-native-elements';
@@ -165,6 +166,7 @@ const BoltCardDisconnect = ({navigation}) => {
     const enableResetMode = async () => {
         setWriteKeysOutput(null)
         setResetNow(true);
+        setWriteError(null);
         var result = [];
         console.log('key0', key0);
         try {
