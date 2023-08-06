@@ -246,7 +246,7 @@ const BoltCardDisconnect = ({navigation}) => {
             NfcManager.cancelTechnologyRequest();
             setWriteKeysOutput(result.join('\r\n'));
             setWritingCard(false);
-            await delay(1500);
+            await delay(500);
             setResetNow(false);
         }
     }
