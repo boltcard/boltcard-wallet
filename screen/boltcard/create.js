@@ -334,15 +334,13 @@ const BoltCardCreate = ({navigation}) => {
             }
             setTagTypeError(error);
             setWritingCard(false);
-            await delay(1500);
-            setWriteMode(false);
         } finally {
             // stop the nfc scanning
             await NfcManager.cancelTechnologyRequest();
             setWritingCard(false);
             //delay 1.5 sec after canceling to prevent users calling the requestTechnology function right away.
             //if the request function gets called right after the cancel call, it returns duplicate registration error later
-            await delay(1500);
+            await delay(500);
             setWriteMode(false);
         }
     }
