@@ -70,7 +70,7 @@ const BoltCardDetails = () => {
           color: colors.feeText,
         },
         manageFundsButton: {
-          backgroundColor: colors.redText
+          backgroundColor: 'tomato'
         }
     });
 
