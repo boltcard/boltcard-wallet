@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { NavigationContainer, CommonActions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { navigationRef } from './NavigationService';
 import * as NavigationService from './NavigationService';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -382,6 +383,7 @@ const App = () => {
       <Biometric />
       <WidgetCommunication />
       <Privacy />
+      <Toast />
     </SafeAreaProvider>
   );
 };

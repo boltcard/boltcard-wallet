@@ -1,5 +1,5 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -12,9 +12,12 @@ import {
     Text,
     TextInput,
     View,
+    Image
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import LottieView from 'lottie-react-native';
 import Ntag424 from '../../class/Ntag424';
 import { Icon } from 'react-native-elements';
 
@@ -30,7 +33,7 @@ import navigationStyle from '../../components/navigationStyle';
 
 const defaultKey = "00000000000000000000000000000000";
 
-const BoltCardDisconnect = () => {
+const BoltCardDisconnect = ({navigation}) => {
 
     const { walletID } = useRoute().params;
     const { wallets, saveToDisk } = useContext(BlueStorageContext);
@@ -84,9 +87,26 @@ const BoltCardDisconnect = () => {
     const [pasteWipeKeysJSON, setPasteWipeKeysJSON] = useState()
     const [resetNow, setResetNow] = useState(false);
     const [keyJsonError, setKeyJsonError] = useState(false);
+    const [writeError, setWriteError] = useState(false);
+    const [writingCard, setWritingCard] = useState(false);
+
+    const animationRef = useCallback((ref) => {
+        if(ref) {
+            ref.play();
+            // Or set a specific startFrame and endFrame with:
+            ref.play(30, 120);
+        }
+    }, []);
+
+    useEffect(() => {
+        navigation.addListener('beforeRemove', (e) => {
+            NfcManager.cancelTechnologyRequest();
+        })
+    }, [navigation])
 
     useEffect(() => {
        if(wipeCardDetails) {
+            console.log('wipeCardDetails', wipeCardDetails);
             setUid(wipeCardDetails.uid);
             setKey0(wipeCardDetails.k0 || "00000000000000000000000000000000");
             setKey1(wipeCardDetails.k1 || "00000000000000000000000000000000");
@@ -108,12 +128,16 @@ const BoltCardDisconnect = () => {
     }, [wipeCardDetails]);
 
     const getWipeKeys = async (wallet) => {
+        setLoading(true);
         try {
             const data = await wallet.wipecard();
             setWipeCardDetails(data);
-            setLoading(false);
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000);
         } catch(err) {
             alert(err.message);
+            setLoading(false);
         }
     }
 
@@ -122,6 +146,12 @@ const BoltCardDisconnect = () => {
             getWipeKeys(wallet);
         }
     }, [walletID]);
+
+    useEffect(() => {
+        if(key0 && key1 && key2 && key3 && key4 && Platform.OS == 'android') {
+            enableResetMode()
+        }
+    }, [key0, key1, key2, key3, key4]);
 
     const setCardWiped = async () => {
         console.log('setCardWiped');
@@ -136,6 +166,7 @@ const BoltCardDisconnect = () => {
     const enableResetMode = async () => {
         setWriteKeysOutput(null)
         setResetNow(true);
+        setWriteError(null);
         var result = [];
         console.log('key0', key0);
         try {
@@ -143,6 +174,7 @@ const BoltCardDisconnect = () => {
             await NfcManager.requestTechnology(NfcTech.IsoDep, {
                 alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed."
             });
+            setWritingCard(true);
             
             const defaultKey = '00000000000000000000000000000000';
             
@@ -208,18 +240,176 @@ const BoltCardDisconnect = () => {
                 error = "NFC Error: "+(ex.message? ex.message : ex.constructor.name);
             }
             result.push(error);
-            setWriteKeysOutput(error);
+            setWriteError(error);
         } finally {
             // stop the nfc scanning
             NfcManager.cancelTechnologyRequest();
-            delay(1500);
             setWriteKeysOutput(result.join('\r\n'));
-            // setResetNow(false);
+            setWritingCard(false);
+            await delay(500);
+            setResetNow(false);
         }
     }
 
     const disableResetMode = () => {
+        NfcManager.cancelTechnologyRequest();
         setResetNow(false);
+    }
+
+    const writeCardContent = () => {
+        if(writingCard || writeKeysOutput || writeError) {
+            //write card result or writing card
+            if(writingCard) {
+               return (
+                    <View style={{marginVertical: 20}}>
+                        <ActivityIndicator style={{marginBottom: 15}}/>
+                        <BlueText style={{fontSize: 20, textAlign: 'center', marginBottom: 10}}>Resetting your bolt card...</BlueText>
+                        <BlueText style={{fontSize: 20, textAlign: 'center'}}>Do not remove your card{"\n"}until resetting is complete.</BlueText>
+                    </View>
+                ); 
+            } else {
+                if(writeKeysOutput || writeError) {
+                    // result of card being written
+                    return (
+                        <>  
+                            <>
+                                {!writeError ?
+                                    <>
+                                        <Icon name="check" color="#0f5cc0" size={80} />
+                                        <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                            Card Reset Complete
+                                        </BlueText>
+                                    </>
+                                :
+                                    <>
+
+                                        <Icon name="warning" color="#0f5cc0" size={80} />
+                                        <BlueText style={{fontSize:30, textAlign: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                            Card Reset Failed
+                                        </BlueText>
+                                    </>
+                                }
+                                <BlueButton 
+                                    style={styles.link}
+                                    title={!showDetails ? "Show Write Details ▼" : "Hide Write Details ▴"}
+                                    onPress={() => setShowDetails(!showDetails)}
+                                />
+                                {showDetails && 
+                                    <View style={{paddingBottom: 20}}>
+                                        <Text>Output:</Text>
+                                        {writeError && <Text>Tag Type Error: {writeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
+                                        {writeKeysOutput && <Text>{writeKeysOutput}</Text>}                                        
+                                    </View>
+                                }
+                            </>
+                            <>
+                                {!wallet.cardWritten ? 
+                                    <BlueButton 
+                                        title="Go back"
+                                        onPress={() => {
+                                            popToTop();
+                                            goBack();
+                                        }}
+                                    />
+                                :
+                                    <BlueButton 
+                                        title="Retry"
+                                        onPress={enableResetMode}
+                                    />
+                                }
+                            </>
+                        </>
+
+                    );
+                }
+            }
+        } else {
+            var content = () => null;
+            if(resetNow) {
+                //ready to reset card
+                content = () => (
+                    <React.Fragment>
+                        <BlueText style={{...styles.label, fontSize: 25, lineHeight: 35, marginBottom: 10}}>Hold your nfc card{"\n"}to the reader.</BlueText>
+                        <View style={{justifyContent: 'center', flexDirection: 'row'}}>
+                            <Icon name="warning" color="orange" size={20} />
+                            <BlueText style={{...styles.label, fontSize:20, marginLeft: 10}}>
+                                Hold card steady.
+                            </BlueText>
+                        </View>
+                        <View style={{justifyContent: 'center', flexDirection: 'row'}}>
+                            <Icon name="warning" color="orange" size={20} />
+                            <BlueText style={{...styles.label, fontSize:20, marginLeft: 10}}>
+                                Do not remove your card{"\n"}until resetting is complete. 
+                            </BlueText>
+                        </View>
+                        <View style={{alignItems: 'center'}}>
+                            <LottieView 
+                                source={require("../../img/nfc-tap-animation.json")} 
+                                autoplay={true} 
+                                loop={true} 
+                                style={{height: 200}}
+                                ref={animationRef}
+                            />
+                        </View>
+                    </React.Fragment>
+                );
+            } else {
+                content = () => (
+                    <React.Fragment>
+                        <View>
+                            <Text style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Reset your Boltcard</Text>
+                            <View style={{alignItems: 'center'}}>
+                                <Image 
+                                    source={require('../../img/bolt-card-unlink_black.png')}
+                                    style={{width: 130, height: 100, marginVertical:20}}
+                                    resizeMode={'cover'}
+                                />
+                            </View>
+                        </View>
+                        <View style={{marginBottom: 15}}>
+                            <BlueButton title="Reset" onPress={enableResetMode}/>
+                        </View>
+                    </React.Fragment>
+                );
+            }
+            return (
+                <React.Fragment>
+                    {content()}
+                    <BlueButton 
+                        style={styles.link}
+                        title={!showDetails ? "Advanced ▼" : "Hide Advanced ▴"}
+                        onPress={() => setShowDetails(!showDetails)}
+                    />
+                        {showDetails && <>                          
+                            <View style={{marginBottom: 20}}>
+                                <View style={styles.titlecontainer}>
+                                    <Text style={styles.title}>Key 0</Text>
+                                </View>
+                                <BlueText>{key0}</BlueText>
+                                <View style={styles.titlecontainer}>
+                                    <Text style={styles.title}>Key 1</Text>
+                                </View>
+                                <BlueText>{key1}</BlueText>
+                                <View style={styles.titlecontainer}>
+                                    <Text style={styles.title}>Key 2</Text>
+                                </View>
+                                <BlueText>{key2}</BlueText>
+                                <View style={styles.titlecontainer}>
+                                    <Text style={styles.title}>Key 3</Text>
+                                </View>
+                                <BlueText>{key3}</BlueText>
+                                <View style={styles.titlecontainer}>
+                                    <Text style={styles.title}>Key 4</Text>
+                                </View>
+                                <BlueText>{key4}</BlueText>
+                            </View>
+                        </>
+                        } 
+                </React.Fragment>
+            );
+        }
+
+        return null;
     }
     
     return(
@@ -227,38 +417,6 @@ const BoltCardDisconnect = () => {
             <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
                 <View style={styles.scrollBody}>
-                    <Dialog.Container visible={resetNow}>
-                        <Dialog.Title style={styles.textBlack}>
-                            <Icon name="creditcard" size={30} color="#000" type="antdesign" /> Hold NFC Card
-                        </Dialog.Title>
-                        {!writeKeysOutput && <Text style={{fontSize:20, textAlign: 'center', borderColor:'black'}}>
-                        Hold the bolt card to the reader until the reset has completed
-                        </Text>}
-                        
-                        <View style={{fontSize:20, borderColor:'black', alignItems: 'center', marginVertical: 15}}>
-                            <Text>
-                                {writeKeysOutput ? writeKeysOutput : <ActivityIndicator size="large" />}
-                            </Text>
-                        </View>
-                        {__DEV__ && <BlueButton
-                                    onPress={()=> {
-                                        setCardWiped(); 
-                                        setWriteKeysOutput("Card has been wiped");
-
-                                    }}
-                                    title="Simulate disconnect" 
-                                />}
-                        <Dialog.Button label="Close"
-                        onPress={() => {
-                            console.log('wallet', wallet.cardWritten);
-                            if(!wallet.cardWritten) {
-                                popToTop();
-                                goBack();
-                            } else {
-                                disableResetMode();
-                            }
-                        }} />
-                    </Dialog.Container>
                     <Dialog.Container visible={keyJsonError}>
                         <Dialog.Title style={styles.textBlack}>
                         Wipe Keys Issue
@@ -269,63 +427,27 @@ const BoltCardDisconnect = () => {
                             setKeyJsonError(false);
                         }} />
                     </Dialog.Container>
-                    <BlueCard>
-                        <BlueText style={styles.label}>
-                            {/* <Image 
-                                source={(() => {
-                                return require('../../img/bolt-card-unlink.png');
-                                })()} style={{width: 60, height: 40, marginTop:20}}
-                            /> */}
-                        </BlueText>
-                        <BlueText style={styles.label}>Disconnect my bolt card</BlueText>
-                        {loading ? 
-                            <BlueLoading />
-                        : 
-                            <>
-                                {__DEV__ && <BlueButton
-                                    onPress={()=> {
-                                        setCardWiped();  
-                                    }}
-                                    title="Simulate disconnect" 
-                                />}
-                                <BlueButton 
-                                    style={styles.link}
-                                    title={!showDetails ? "Show Key Details ▼" : "Hide Key Details ▴"}
-                                    onPress={() => setShowDetails(!showDetails)}
-                                />
-                                {showDetails && 
-                                <>
-                                    <View style={styles.titlecontainer}>
-                                        <Text style={styles.title}>Key 0</Text>
+                    {
+                        loading
+                    ?
+                        <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+                            <ActivityIndicator style={{marginBottom: 15}} size="large"/>
+                            <BlueText style={{marginBottom: 15, ...styles.h4}}>Getting card details...</BlueText>
+                        </View>
+                    :
+                        <>
+                            {wipeCardDetails ?
+                                <View style={{flex: 1, justifyContent: 'center'}}>
+                                    <View>
+                                        {writeCardContent()}
                                     </View>
-                                    <BlueText>{key0}</BlueText>
-                                    <View style={styles.titlecontainer}>
-                                        <Text style={styles.title}>Key 1</Text>
-                                    </View>
-                                    <BlueText>{key1}</BlueText>
-                                    <View style={styles.titlecontainer}>
-                                        <Text style={styles.title}>Key 2</Text>
-                                    </View>
-                                    <BlueText>{key2}</BlueText>
-                                    <View style={styles.titlecontainer}>
-                                        <Text style={styles.title}>Key 3</Text>
-                                    </View>
-                                    <BlueText>{key3}</BlueText>
-                                    <View style={styles.titlecontainer}>
-                                        <Text style={styles.title}>Key 4</Text>
-                                    </View>
-                                    <BlueText>{key4}</BlueText>
+                                </View>
 
-                                </>
-                                }
-                                <BlueButton 
-                                    title="Reset"
-                                    color="#000000"
-                                    onPress={enableResetMode}
-                                />
-                            </>
-                        }
-                    </BlueCard>
+                            :
+                                <Text>Error getting bolt card details.</Text>
+                            }
+                        </>
+                    }
                 </View>
             </ScrollView>
             
@@ -427,6 +549,24 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top',
         color:'#000'
     },
+    dialogTitle: Platform.select({
+        ios: {
+            color: "#333",
+            textAlign: "center",
+            fontSize: 18,
+            fontWeight: "600",
+        },
+        android: {
+            color: "#333",
+            fontWeight: "500",
+            fontSize: 18,
+        },
+        web: {
+            fontWeight: "500",
+            fontSize: 18,
+        },
+        default: {},
+    })
 });
 
 BoltCardDisconnect.navigationOptions = navigationStyle(
@@ -437,18 +577,7 @@ BoltCardDisconnect.navigationOptions = navigationStyle(
 (options, { theme, navigation, route }) => (
     {
          ...options, 
-         title: "Disconnect bolt card", 
-        //  headerLeft: () => Platform.OS == 'ios' ? (
-        //     <TouchableOpacity
-        //     accessibilityRole="button"
-        //     disabled={route.params.isLoading === true}
-        //     onPress={() =>
-        //         navigation.navigate('BoltCardDisconnectHelp')
-        //     }
-        //     >
-        //         <Icon name="help-outline" type="material" size={22} color="#000" />
-        //     </TouchableOpacity>
-        // ) : null
+         title: "Disconnect bolt card"
     }
 ),
 );
