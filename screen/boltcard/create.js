@@ -98,6 +98,8 @@ const BoltCardCreate = ({navigation}) => {
     const [testc, setTestc] = useState();
     const [testBolt, setTestBolt] = useState();
 
+    const [showBackupDialog, setShowBackupDialog] = useState(false);
+
     const [writingCard, setWritingCard] = useState(false);
 
     const [enhancedPrivacy, setEnhancedPrivacy] = useState(false);
@@ -142,6 +144,7 @@ const BoltCardCreate = ({navigation}) => {
                 setCardDetails(keys);
                 wallet.setWipeData(null);
                 saveToDisk();
+                setShowBackupDialog(true);
                 setTimeout(() => {
                     setLoading(false);
                 }, 1000);
@@ -575,6 +578,19 @@ const BoltCardCreate = ({navigation}) => {
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
+                <Dialog.Container
+                    visible={showBackupDialog}
+                >
+                    <Dialog.Title style={{textAlign: 'center'}}>Do you want to download your card keys?</Dialog.Title>
+                    <Dialog.Description style={{textAlign: 'center'}}>
+                        Backup is highly recommended in case something goes wrong during the programming process. {"\n"}{"\n"}You can do this later in the card details screen. 
+                    </Dialog.Description>
+                    <Dialog.Button label="No" onPress={() => setShowBackupDialog(false)}/>
+                    <Dialog.Button label="Yes" onPress={() => {
+                        backupCardKeys();
+                        setShowBackupDialog(false)
+                    }}/>
+                </Dialog.Container>
                 <View style={styles.scrollBody}>
                     <BlueCard>
                         {

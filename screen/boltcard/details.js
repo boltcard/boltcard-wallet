@@ -10,8 +10,7 @@ import {
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Button
+  KeyboardAvoidingView
 } from 'react-native';
 
 import {
@@ -23,10 +22,10 @@ import {
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
-import { ListItem } from 'react-native-elements';
+import { ListItem, Button } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 
-
+var RNFS = require('react-native-fs');
 
 const BoltCardDetails = () => {
 
@@ -200,6 +199,40 @@ const BoltCardDetails = () => {
       setValue(newVal);
     }
 
+    const backupCardKeys = () => {
+        let filename = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}.json.txt`
+        let filename2 = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}-wipe.json.txt`
+        var baseDirectoryPath = Platform.OS == "ios" ? RNFS.LibraryDirectoryPath : RNFS.DownloadDirectoryPath;
+        var path = baseDirectoryPath + '/'+filename;
+        var path2 = baseDirectoryPath + '/'+filename2;
+        console.log('path', path);
+        // write the create card key file
+        RNFS.writeFile(path, JSON.stringify(wallet.cardKeys), 'utf8')
+          .then((success) => {
+              // write the wipe card key file
+              RNFS.writeFile(path2, JSON.stringify({
+                version: 1,
+                action: "wipe",
+                k0: wallet.cardKeys.k0,
+                k1: wallet.cardKeys.k1,
+                k2: wallet.cardKeys.k2,
+                k3: wallet.cardKeys.k3,
+                k4: wallet.cardKeys.k4
+              }), 'utf8')
+              .then((success) => {
+                alert(`Card keys saved to ${Platform.OS == 'android' ? 'downloads' : 'library'} folder with filenames: \r\n\r\n`+filename+'\r\n'+filename2);
+              })
+              .catch((err) => {
+                console.log(err.message);
+                alert('Error downloading keys: '+err.message);
+              });
+          })
+          .catch((err) => {
+            console.log(err.message);
+            alert('Error downloading keys: '+err.message);
+          });
+    }
+
     return(
         <View style={[styles.root, stylesHook.root]}>
             <StatusBar barStyle="light-content" />
@@ -241,10 +274,12 @@ const BoltCardDetails = () => {
                                     {!wallet.getWipeData() &&
                                       <View style={{marginLeft: 20}}>
                                         <Button
+                                          size="sm"
                                           title="Edit"
-                                          style={{height:10}}
+                                          titleStyle={{fontSize: 15}}
+                                          buttonStyle={{paddingVertical: 3, paddingHorizontal: 14}}
                                           onPress={() => setEditMode(true)}
-                                        />
+                                        ></Button>
                                       </View>
                                     }
                                   </View>
@@ -298,7 +333,7 @@ const BoltCardDetails = () => {
                             }
                             
                             
-                            {!wallet.getWipeData() && !editMode && details && details.lnurlw_enable &&
+                            {!wallet.getWipeData() && !editMode && details && details.pin_enable &&
                               <>
                                 <View style={{margin: 0, borderWidth:1, padding:10, borderColor:'#777'}}>
                                   <BlueListItem
@@ -344,9 +379,22 @@ const BoltCardDetails = () => {
                               </>
                             }
                             
-                            
+                            {!editMode && wallet && 
+                              <Button
+                                title="Download Keys"
+                                onPress={backupCardKeys}
+                                size="md"
+                                containerStyle={{alignItems: 'center', marginTop: 20}}
+                                buttonStyle={{width: 170, backgroundColor: '#fc9031'}}
+                                icon={{
+                                  name: 'save',
+                                  color: 'white'
+                                }}
+                                iconRight
+                              ></Button>
+                            }
                             {!editMode &&
-                              <View style={{alignItems: 'center', marginTop: 30}}>
+                              <View style={{alignItems: 'center', marginTop: 20}}>
                                 <TouchableOpacity accessibilityRole="button" onPress={() => {
                                   navigate('BoltCardCreateRoot', {
                                     screen: 'BoltCardDisconnect',
