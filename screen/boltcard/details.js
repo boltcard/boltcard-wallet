@@ -22,7 +22,7 @@ import {
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import alert from '../../components/Alert';
 import navigationStyle from '../../components/navigationStyle';
-import { ListItem, Button } from 'react-native-elements';
+import { ListItem, Button, Icon } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 
 var RNFS = require('react-native-fs');
@@ -336,6 +336,10 @@ const BoltCardDetails = () => {
                             {!wallet.getWipeData() && !editMode && details && details.pin_enable &&
                               <>
                                 <View style={{margin: 0, borderWidth:1, padding:10, borderColor:'#777'}}>
+                                  <View style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
+                                    <Icon name="warning" color="#ffa500" size={16} />
+                                    <Text style={{marginBottom: 10, marginLeft: 5, flex: 1}}>PIN only works with Bolt Card PoS. An error will occur on payment with any PoS app that has not implemented the pin function yet.</Text>
+                                  </View>
                                   <BlueListItem
                                     hideChevron
                                     title="Enable Card PIN"
@@ -379,22 +383,18 @@ const BoltCardDetails = () => {
                               </>
                             }
                             
-                            {!editMode && wallet && 
-                              <Button
-                                title="Download Keys"
-                                onPress={backupCardKeys}
-                                size="md"
-                                containerStyle={{alignItems: 'center', marginTop: 20}}
-                                buttonStyle={{width: 170, backgroundColor: '#fc9031'}}
-                                icon={{
-                                  name: 'save',
-                                  color: 'white'
-                                }}
-                                iconRight
-                              ></Button>
-                            }
-                            {!editMode &&
-                              <View style={{alignItems: 'center', marginTop: 20}}>
+                            {!editMode && 
+                              <View style={{flexDirection: 'row', marginTop: 20}}>
+                                <TouchableOpacity
+                                  onPress={backupCardKeys}
+                                  style={{...styles.manageFundsButton, ...stylesHook.manageFundsButton, backgroundColor: '#fc9031', marginRight: 4, flex: 1}}
+                                >
+                                  <View>
+                                    <Icon name="save" size={40} style={{marginTop: 15, marginBottom: 0}}/>
+                                    <Text style={{...styles.manageFundsButtonText, marginTop: -5}}>Download Keys</Text>
+                                  </View>
+                                </TouchableOpacity>
+                                
                                 <TouchableOpacity accessibilityRole="button" onPress={() => {
                                   navigate('BoltCardCreateRoot', {
                                     screen: 'BoltCardDisconnect',
@@ -403,8 +403,9 @@ const BoltCardDetails = () => {
                                     },
                                   });
                                 }}
+                                  style={{...styles.manageFundsButton, ...stylesHook.manageFundsButton, marginLeft: 4, flex: 1}}
                                 >
-                                  <View style={[styles.manageFundsButton, stylesHook.manageFundsButton]}>
+                                  <View >
                                   <Image 
                                     source={(() => {
                                       return require('../../img/bolt-card-unlink_black.png');
@@ -413,6 +414,7 @@ const BoltCardDetails = () => {
                                     <Text style={styles.manageFundsButtonText}>Disconnect Bolt Card</Text>
                                   </View>
                                 </TouchableOpacity>
+
                               </View>
                             }
                         </>
