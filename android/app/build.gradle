@@ -102,8 +102,8 @@ android {
         /*
          * https://www.epochconverter.com/
          */
-        versionCode 1691557776
-        versionName "0.3.1"
+        versionCode 1691729328
+        versionName "0.3.2"
         multiDexEnabled true
         testBuildType System.getProperty('testBuildType', 'debug')  // This will later be used to control the test apk build type
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
