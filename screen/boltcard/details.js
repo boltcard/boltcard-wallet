@@ -338,7 +338,7 @@ const BoltCardDetails = () => {
                                 <View style={{margin: 0, borderWidth:1, padding:10, borderColor:'#777'}}>
                                   <View style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
                                     <Icon name="warning" color="#ffa500" size={16} />
-                                    <Text style={{marginBottom: 10, marginLeft: 5, flex: 1}}>PIN only works with Bolt Card PoS. An error will occur on payment with any PoS app that has not implemented the pin function yet.</Text>
+                                    <BlueText style={{marginBottom: 10, marginLeft: 5, flex: 1}}>PIN only works with Bolt Card PoS. An error will occur on payment with any PoS app that has not implemented the pin function yet.</BlueText>
                                   </View>
                                   <BlueListItem
                                     hideChevron

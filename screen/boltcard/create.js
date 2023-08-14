@@ -11,7 +11,8 @@ import {
     StatusBar,
     StyleSheet,
     Text,
-    View
+    View,
+    useColorScheme
 } from 'react-native';
 import {Icon, ListItem, CheckBox} from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -32,6 +33,8 @@ import navigationStyle from '../../components/navigationStyle';
 var RNFS = require('react-native-fs');
 
 const BoltCardCreate = ({navigation}) => {
+    const theme = useColorScheme();
+    const isDarkTheme = theme === 'dark'; 
 
     const { walletID } = useRoute().params;
     const { wallets, saveToDisk } = useContext(BlueStorageContext);
@@ -435,22 +438,22 @@ const BoltCardCreate = ({navigation}) => {
                             />
                             {showDetails && 
                                 <View style={{paddingBottom: 20}}>
-                                    <Text>Output:</Text>
-                                    {tagTypeError && <Text>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
-                                    {cardUID && <Text>Card UID: {cardUID} {showTickOrError(true)}</Text>}
-                                    {tagname && <Text style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</Text>}
-                                    {key0Changed && <Text>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</Text>}                       
-                                    {ndefWritten && <Text>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</Text>}
-                                    {writekeys && <Text>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</Text>}
-                                    {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
-                                    {testp && <Text>Test PICC: {
+                                    <BlueText>Output:</BlueText>
+                                    {tagTypeError && <BlueText>Tag Type Error: {tagTypeError}<Ionicons name="alert-circle"  size={20} color="red" /></BlueText>}
+                                    {cardUID && <BlueText>Card UID: {cardUID} {showTickOrError(true)}</BlueText>}
+                                    {tagname && <BlueText style={{lineHeight:30, textAlignVertical:"center"}}>Tag: {tagname}{showTickOrError(true)}</BlueText>}
+                                    {key0Changed && <BlueText>Keys ready to change: {key0Changed == "no" ? "yes" : "no"}{showTickOrError(key0Changed == "no")}</BlueText>}                       
+                                    {ndefWritten && <BlueText>NDEF written: {ndefWritten}{showTickOrError(ndefWritten == "success")}</BlueText>}
+                                    {writekeys && <BlueText>Keys Changed: {writekeys}{showTickOrError(writekeys == "success")}</BlueText>}
+                                    {ndefRead && <BlueText>Read NDEF: {ndefRead}</BlueText>}
+                                    {testp && <BlueText>Test PICC: {
                                         cardUID.length == 8 ? 
                                         <>test skipped {showTickOrError(true)}</>
                                         : 
                                         <>{testp}{showTickOrError(testp == "ok")}</>
-                                    }</Text>}
-                                    {testc && <Text>Test CMAC: {testc}{showTickOrError(testc == "ok")}</Text>}
-                                    {testBolt && <Text>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</Text>}
+                                    }</BlueText>}
+                                    {testc && <BlueText>Test CMAC: {testc}{showTickOrError(testc == "ok")}</BlueText>}
+                                    {testBolt && <BlueText>Bolt call test: {testBolt}{showTickOrError(testBolt == "success")}</BlueText>}
 
                                     
                                 </View>
@@ -520,10 +523,10 @@ const BoltCardCreate = ({navigation}) => {
                 content = () => (
                     <React.Fragment>
                         <View>
-                            <Text style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Connect your Boltcard</Text>
+                            <BlueText style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Connect your Boltcard</BlueText>
                             <View style={{alignItems: 'center'}}>
                                 <Image 
-                                    source={require('../../img/bolt-card-link_black.png')}
+                                    source={isDarkTheme ? require('../../img/bolt-card-link.png') : require('../../img/bolt-card-link_black.png')}
                                     style={{width: 130, height: 100, marginVertical:20}}
                                     resizeMode={'cover'}
                                 />
@@ -532,7 +535,6 @@ const BoltCardCreate = ({navigation}) => {
                         <View style={{marginBottom: 15}}>
                             <BlueButton title="Write" onPress={writeAgain}/>
                         </View>
-                        <BlueButton title="Download your keys" onPress={backupCardKeys}/>
                     </React.Fragment>
                 );
             }
@@ -610,7 +612,7 @@ const BoltCardCreate = ({navigation}) => {
                                     </View>
 
                                 :
-                                    <Text>Error getting bolt card details.</Text>
+                                    <BlueText>Error getting bolt card details.</BlueText>
                                 }
                             </>
                         }
