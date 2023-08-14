@@ -12,7 +12,8 @@ import {
     Text,
     TextInput,
     View,
-    Image
+    Image,
+    useColorScheme
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import NfcManager, { NfcTech, Ndef} from 'react-native-nfc-manager';
@@ -34,6 +35,8 @@ import navigationStyle from '../../components/navigationStyle';
 const defaultKey = "00000000000000000000000000000000";
 
 const BoltCardDisconnect = ({navigation}) => {
+    const theme = useColorScheme();
+    const isDarkTheme = theme === 'dark'; 
 
     const { walletID } = useRoute().params;
     const { wallets, saveToDisk } = useContext(BlueStorageContext);
@@ -296,9 +299,9 @@ const BoltCardDisconnect = ({navigation}) => {
                                 />
                                 {showDetails && 
                                     <View style={{paddingBottom: 20}}>
-                                        <Text>Output:</Text>
-                                        {writeError && <Text>Tag Type Error: {writeError}<Ionicons name="alert-circle"  size={20} color="red" /></Text>}
-                                        {writeKeysOutput && <Text>{writeKeysOutput}</Text>}                                        
+                                        <BlueText>Output:</BlueText>
+                                        {writeError && <BlueText>Tag Type Error: {writeError}<Ionicons name="alert-circle"  size={20} color="red" /></BlueText>}
+                                        {writeKeysOutput && <BlueText>{writeKeysOutput}</BlueText>}                                        
                                     </View>
                                 }
                             </>
@@ -357,10 +360,10 @@ const BoltCardDisconnect = ({navigation}) => {
                 content = () => (
                     <React.Fragment>
                         <View>
-                            <Text style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Reset your Boltcard</Text>
+                            <BlueText style={{fontSize: 25, fontWeight: 600, textAlign: 'center'}}>Reset your Boltcard</BlueText>
                             <View style={{alignItems: 'center'}}>
                                 <Image 
-                                    source={require('../../img/bolt-card-unlink_black.png')}
+                                    source={isDarkTheme ? require('../../img/bolt-card-unlink.png') : require('../../img/bolt-card-unlink_black.png')}
                                     style={{width: 130, height: 100, marginVertical:20}}
                                     resizeMode={'cover'}
                                 />
@@ -383,23 +386,23 @@ const BoltCardDisconnect = ({navigation}) => {
                         {showDetails && <>                          
                             <View style={{marginBottom: 20}}>
                                 <View style={styles.titlecontainer}>
-                                    <Text style={styles.title}>Key 0</Text>
+                                    <BlueText style={styles.title}>Key 0</BlueText>
                                 </View>
                                 <BlueText>{key0}</BlueText>
                                 <View style={styles.titlecontainer}>
-                                    <Text style={styles.title}>Key 1</Text>
+                                    <BlueText style={styles.title}>Key 1</BlueText>
                                 </View>
                                 <BlueText>{key1}</BlueText>
                                 <View style={styles.titlecontainer}>
-                                    <Text style={styles.title}>Key 2</Text>
+                                    <BlueText style={styles.title}>Key 2</BlueText>
                                 </View>
                                 <BlueText>{key2}</BlueText>
                                 <View style={styles.titlecontainer}>
-                                    <Text style={styles.title}>Key 3</Text>
+                                    <BlueText style={styles.title}>Key 3</BlueText>
                                 </View>
                                 <BlueText>{key3}</BlueText>
                                 <View style={styles.titlecontainer}>
-                                    <Text style={styles.title}>Key 4</Text>
+                                    <BlueText style={styles.title}>Key 4</BlueText>
                                 </View>
                                 <BlueText>{key4}</BlueText>
                             </View>
@@ -421,7 +424,7 @@ const BoltCardDisconnect = ({navigation}) => {
                         <Dialog.Title style={styles.textBlack}>
                         Wipe Keys Issue
                         </Dialog.Title>
-                        <Text>{keyJsonError}</Text>
+                        <BlueText>{keyJsonError}</BlueText>
                         <Dialog.Button label="I understand"
                         onPress={() => {
                             setKeyJsonError(false);
@@ -444,7 +447,7 @@ const BoltCardDisconnect = ({navigation}) => {
                                 </View>
 
                             :
-                                <Text>Error getting bolt card details.</Text>
+                                <BlueText>Error getting bolt card details.</BlueText>
                             }
                         </>
                     }
