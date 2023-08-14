@@ -102,7 +102,7 @@ android {
         /*
          * https://www.epochconverter.com/
          */
-        versionCode 1691989573
+        versionCode 1691990308
         versionName "0.3.3"
         multiDexEnabled true
         testBuildType System.getProperty('testBuildType', 'debug')  // This will later be used to control the test apk build type
