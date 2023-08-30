@@ -362,7 +362,7 @@ const BoltCardCreate = ({navigation}) => {
     const backupCardKeys = () => {
         let filename = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}.json.txt`
         let filename2 = `bolt_card_${(new Date().toJSON().slice(0,19).replaceAll(':','-'))}-wipe.json.txt`
-        var baseDirectoryPath = Platform.OS == "ios" ? RNFS.LibraryDirectoryPath : RNFS.DownloadDirectoryPath;
+        var baseDirectoryPath = Platform.OS == "ios" ? RNFS.DocumentDirectoryPath : RNFS.DownloadDirectoryPath;
         var path = baseDirectoryPath + '/'+filename;
         var path2 = baseDirectoryPath + '/'+filename2;
         console.log('path', path);
